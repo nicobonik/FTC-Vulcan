@@ -10,7 +10,7 @@ import org.firstinspires.ftc.teamcode.Subsystems.IntakeLift;
 public class NormieTeleop extends OpMode {
     protected Drivetrain drivetrain;
     protected IntakeLift inlift;
-    private Boolean brake;
+    private double y;
 
     public void init() {
         drivetrain = new Drivetrain(
@@ -38,7 +38,9 @@ public class NormieTeleop extends OpMode {
         if(gamepad1.b) {
             inlift.intake(true);
         }
-        inlift.swing(gamepad2.left_stick_y);
+        double dy = gamepad2.left_stick_y - y;
+        y += Range.clip(dy/20, -0.05, 0.05);
+        inlift.swing(y);
         drivetrain.arcadeDrive(gamepad1.left_stick_y, gamepad1.right_stick_x);
     }
 
