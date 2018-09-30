@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.Subsystems.IntakeLift;
@@ -11,7 +12,7 @@ import org.firstinspires.ftc.teamcode.Subsystems.IntakeLift;
 public class NormieTeleop extends OpMode {
     protected Drivetrain drivetrain;
     protected IntakeLift inlift;
-    private Boolean brake;
+    private double y;
 
     public void init() {
         drivetrain = new Drivetrain(
@@ -47,9 +48,11 @@ public class NormieTeleop extends OpMode {
         } else if(gamepad1.y) {
             inlift.door(false);
         }
+        double dy = gamepad2.left_stick_y - y;
+        y = Range.clip(y + Range.clip(dy/20, -0.05, 0.05), -1.0, 1.0);
+        inlift.swing(y);
+        drivetrain.arcadeDrive(gamepad1.left_stick_y, gamepad1.right_stick_x);
 
-        inlift.swing(gamepad2.left_stick_y);
-        drivetrain.arcadeDrive(-gamepad1.left_stick_y, gamepad1.right_stick_x);
     }
 
     public void stop() {
