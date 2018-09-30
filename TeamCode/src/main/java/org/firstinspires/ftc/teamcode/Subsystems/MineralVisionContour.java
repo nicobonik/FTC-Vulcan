@@ -71,40 +71,44 @@ public class MineralVisionContour extends OpenCVPipeline {
     }
 
     public int getGoldPos() {
-        double max1 = 0;
-        double max2 = 0;
-        double x1 = 0;
-        double x2 = 0;
-        double area;
-        float[] radius = {};
-        double circleArea;
-        MatOfPoint2f temp = new MatOfPoint2f();
-        Point center = new Point();
-        for (MatOfPoint contour : contours) {
-            area = Imgproc.contourArea(contour);
-            if (area > 500 && area < 1000) { //placeholder areas
-                contour.convertTo(temp, CvType.CV_32F);
-                Imgproc.minEnclosingCircle(temp, center, radius);
-                circleArea = Math.PI * radius[0] * radius[0];
-                if (area > 0.9 * circleArea * circleArea && area < 1.15 * circleArea * circleArea) {
-                    if (area > max1) {
-                        max2 = max1;
-                        x2 = x1;
-                        max1 = area;
-                        x1 = center.x;
-                    } else if (area > max2) {
-                        max2 = area;
-                        x2 = center.x;
+        try {
+            double max1 = 0;
+            double max2 = 0;
+            double x1 = 0;
+            double x2 = 0;
+            double area;
+            float[] radius = {};
+            double circleArea;
+            MatOfPoint2f temp = new MatOfPoint2f();
+            Point center = new Point();
+            for (MatOfPoint contour : contours) {
+                area = Imgproc.contourArea(contour);
+                if (area > 500 && area < 1000) { //placeholder areas
+                    contour.convertTo(temp, CvType.CV_32F);
+                    Imgproc.minEnclosingCircle(temp, center, radius);
+                    circleArea = Math.PI * radius[0] * radius[0];
+                    if (area > 0.9 * circleArea * circleArea && area < 1.15 * circleArea * circleArea) {
+                        if (area > max1) {
+                            max2 = max1;
+                            x2 = x1;
+                            max1 = area;
+                            x1 = center.x;
+                        } else if (area > max2) {
+                            max2 = area;
+                            x2 = center.x;
+                        }
                     }
                 }
             }
-        }
-        if ((x2 + x1) / 2 < imageWidth / 3) {
-            return 2;
-        } else if ((x2 + x1) / 2 < imageWidth * 2 / 3) {
-            return 1;
-        } else {
-            return 0;
+            if ((x2 + x1) / 2 < imageWidth / 3) {
+                return 2;
+            } else if ((x2 + x1) / 2 < imageWidth * 2 / 3) {
+                return 1;
+            } else {
+                return 0;
+            }
+        } catch (NullPointerException e) {
+            return 3;
         }
     }
 }

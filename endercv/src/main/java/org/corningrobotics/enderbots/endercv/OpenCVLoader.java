@@ -50,14 +50,12 @@ public class OpenCVLoader {
         filesDir = path;
     }
     public static void loadOpenCV() {
-
         File protectedStorageLib = new File(filesDir + "/extra/libopencv_java3.so");
         File protectedExtraFolder = new File(filesDir + "/extra/");
         File internalStorageLib = new File(Environment.getExternalStorageDirectory() + "/EnderCV/libopencv_java3.so");
         if (!protectedStorageLib.exists() && internalStorageLib.exists()) {
             if (!protectedExtraFolder.exists())
                 protectedExtraFolder.mkdir();
-
         }
 
         try {

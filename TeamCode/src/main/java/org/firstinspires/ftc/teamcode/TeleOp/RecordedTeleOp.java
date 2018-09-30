@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import java.io.FileOutputStream;
 
-@TeleOp(name="RecordDrive", group="Drive")
+@TeleOp(name="RecordDrive", group="Test")
 public class RecordedTeleOp extends Tele {
     private FileOutputStream outputStream;
     public void init() {

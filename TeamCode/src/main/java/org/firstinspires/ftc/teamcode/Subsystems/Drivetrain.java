@@ -18,7 +18,7 @@ public class Drivetrain {
     private static final double botCirc = Math.PI * botDiam;
     private static final int encTicks = 1440;
     private static final int ticksPerInch = (int)(encTicks / wheelCirc);
-    private static final double turnMult = 1.0;
+    private static final double turnMult = 0.5;
     public static final double BASE_POWER = 0.9;
     public double tempPower = BASE_POWER;
     private double pX, pY;
@@ -69,12 +69,12 @@ public class Drivetrain {
     }
 
     public void arcadeDrive(double forward, double turn) {
-        double turn2 = (forward <= 0 ? 1 : -1) * turn;
-        double forward2 = (forward / 0.7) * (0.3 * Math.pow(forward, 6) + 0.4);
-        double v[] = {tempPower * (forward2 + turnMult * turn2),
-                tempPower * (forward2 - turnMult * turn2),
-                tempPower * (forward2 + turnMult * turn2),
-                tempPower * (forward2 - turnMult * turn2)};
+        double turn2 = turnMult * tempPower * (forward <= 0 ? 1 : -1) * turn;
+        double forward2 = tempPower * (forward / 0.7) * (0.3 * Math.pow(forward, 6) + 0.4);
+        double v[] = {forward2 + turn2,
+                forward2 - turn2,
+                forward2 + turn2,
+                forward2 - turn2};
         double max = Math.max(Math.abs(v[3]), Math.max(Math.abs(v[2]), Math.max(Math.abs(v[1]), Math.abs(v[0]))));
         if(max > tempPower) {
             for (int i = 0; i < 4; i++) {
@@ -124,7 +124,16 @@ public class Drivetrain {
     }
 
     public void turnGyro(int degrees) {
-        // todo
+        resetOrientation();
+        setM(DcMotor.RunMode.RUN_USING_ENCODER);
+        int diff = degrees - (int)globalAngle;
+        while (Math.abs(globalAngle - degrees) > 5) {
+            globalAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+            for (int motor = 0; motor < 4; motor++) {
+                motors[motor].setPower(Range.clip((double)diff/30, 0.1, tempPower) * (motor % 2 == 0 ? -1 : 1));
+            }
+        }
+        stop();
     }
 
     public void turnIMU(int degrees) {

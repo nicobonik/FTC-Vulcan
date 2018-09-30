@@ -23,10 +23,15 @@ public class VisionTest extends OpMode {
     }
 
     public void loop() {
-        contourVision.setShowCountours(gamepad1.a);
-        houghVision.setShowCountours(gamepad1.b);
-        telemetry.addData("goldPosContour: ", contourVision.getGoldPos());
-        telemetry.addData("goldPosHough: ", houghVision.getGoldPos());
+        try {
+            contourVision.setShowCountours(gamepad1.a);
+            houghVision.setShowCountours(gamepad1.b);
+            telemetry.addData("goldPosContour: ", contourVision.getGoldPos());
+            telemetry.addData("goldPosHough: ", houghVision.getGoldPos());
+        } catch (NullPointerException e) {
+            telemetry.addData("lineNo", e.getStackTrace()[0].getLineNumber());
+            telemetry.addData("file", e.getStackTrace()[0].getFileName());
+        }
         telemetry.update();
     }
 

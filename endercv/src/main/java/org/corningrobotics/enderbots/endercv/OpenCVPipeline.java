@@ -9,6 +9,8 @@ import org.opencv.android.JavaCameraView;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 
+import static org.opencv.android.OpenCVLoader.initDebug;
+
 /**
  * Created by guinea on 6/19/17.
  * -------------------------------------------------------------------------------------
@@ -44,7 +46,7 @@ import org.opencv.core.Mat;
 public abstract class OpenCVPipeline implements CameraBridgeViewBase.CvCameraViewListener2 {
     static {
         try {
-            System.loadLibrary("opencv_java3");
+            initDebug();
         } catch (UnsatisfiedLinkError e) {
             OpenCVLoader.loadOpenCV();
             // pass
