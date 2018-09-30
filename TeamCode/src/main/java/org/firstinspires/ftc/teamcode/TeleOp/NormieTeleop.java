@@ -27,7 +27,6 @@ public class NormieTeleop extends OpMode {
                 hardwareMap.servo.get("door")
                 );
         gamepad1.setJoystickDeadzone(0.05f);
-        brake = true;
     }
 
     public void loop() {

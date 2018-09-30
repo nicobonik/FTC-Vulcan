@@ -13,5 +13,9 @@ buildscript {
     }
 }
 
+<<<<<<< HEAD
 dependencies {
 }
+=======
+
+>>>>>>> 612f456b1020dac06adbc24b050e2a612fc6c756
