@@ -1,7 +1,4 @@
 include ':FtcRobotController'
 include ':TeamCode'
-<<<<<<< HEAD
 include ':openCVLibrary3'
 include ':endercv'
-=======
->>>>>>> 612f456b1020dac06adbc24b050e2a612fc6c756

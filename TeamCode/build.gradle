@@ -7,7 +7,6 @@
 // the build definitions, you can place those customizations in this file, but
 // please think carefully as to whether such customizations are really necessary
 // before doing so.
-<<<<<<< HEAD
 // Custom definitions may go here
 // Include common definitions from above.
 apply from: '../build.common.gradle'
@@ -15,11 +14,3 @@ dependencies {
     implementation project(':openCVLibrary3')
     implementation project(':endercv')
 }
-=======
-
-
-// Custom definitions may go here
-
-// Include common definitions from above.
-apply from: '../build.common.gradle'
->>>>>>> 612f456b1020dac06adbc24b050e2a612fc6c756
