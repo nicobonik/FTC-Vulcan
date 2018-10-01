@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -25,8 +26,8 @@ public class Drivetrain {
     private DcMotor motors[] = new DcMotor[4];
     private BNO055IMU imu;
     private BNO055IMU.Parameters parameters;
-    private Orientation lastOrientation;
-    private double globalAngle;
+    private Orientation zeroOrientation;
+    private ModernRoboticsI2cGyro gyro;
 
     public Drivetrain(DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight) {
         motors[0] = frontLeft;
@@ -45,27 +46,36 @@ public class Drivetrain {
         motors[3].setDirection(DcMotor.Direction.FORWARD);
     }
 
-    public void setupIMU(BNO055IMU revIMU) throws InterruptedException {
+    public void setupGyro(ModernRoboticsI2cGyro gyr) {
+        gyro = gyr;
+        gyro.calibrate();
+        while(gyro.isCalibrating()) {}
+    }
+
+    public void setupIMU(BNO055IMU adaIMU) throws InterruptedException {
         parameters = new BNO055IMU.Parameters();
         parameters.mode = BNO055IMU.SensorMode.IMU;
         parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
         parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
         parameters.loggingEnabled = false;
 
-        imu = revIMU;
+        imu = adaIMU;
 
         imu.initialize(parameters);
         while (!imu.isGyroCalibrated())
         {
             Thread.sleep(50);
         }
-        resetOrientation();
+        resetOrientationIMU();
     }
 
-    private void resetOrientation()
+    private void resetOrientationGyro() {
+        gyro.resetZAxisIntegrator();
+    }
+
+    private void resetOrientationIMU()
     {
-        lastOrientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        globalAngle = 0;
+        zeroOrientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
     }
 
     public void arcadeDrive(double forward, double turn) {
@@ -124,28 +134,36 @@ public class Drivetrain {
     }
 
     public void turnGyro(int degrees) {
-        resetOrientation();
-        setM(DcMotor.RunMode.RUN_USING_ENCODER);
-        int diff = degrees - (int)globalAngle;
-        while (Math.abs(globalAngle - degrees) > 5) {
-            globalAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
-            for (int motor = 0; motor < 4; motor++) {
-                motors[motor].setPower(Range.clip((double)diff/30, 0.1, tempPower) * (motor % 2 == 0 ? -1 : 1));
+        PID control = new PID(0.4, 0.7, 0.7, 0, new powerControl() {
+            public void setPower(double power) {
+                for (int motor = 0; motor < 4; motor++) {
+                    motors[motor].setPower(Range.clip(power / 180, -1.0, 1.0) * (motor % 2 == 0 ? -1 : 1));
+                }
             }
-        }
+            public double getPosition() {
+                return gyro.getHeading();
+            }
+        });
+        resetOrientationGyro();
+        setM(DcMotor.RunMode.RUN_USING_ENCODER);
+        control.runToPosition(degrees, 5);
         stop();
     }
 
     public void turnIMU(int degrees) {
-        resetOrientation();
-        setM(DcMotor.RunMode.RUN_USING_ENCODER);
-        int diff = degrees - (int)globalAngle;
-        while (Math.abs(globalAngle - degrees) > 5) {
-            globalAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
-            for (int motor = 0; motor < 4; motor++) {
-                motors[motor].setPower(Range.clip((double)diff/30, 0.1, tempPower) * (motor % 2 == 0 ? -1 : 1));
+        PID control = new PID(0.4, 0.7, 0.7, 0, new powerControl() {
+            public void setPower(double power) {
+                for (int motor = 0; motor < 4; motor++) {
+                    motors[motor].setPower(Range.clip(power / 180, -1.0, 1.0) * (motor % 2 == 0 ? -1 : 1));
+                }
             }
-        }
+            public double getPosition() {
+                return imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle - zeroOrientation.firstAngle;
+            }
+        });
+        resetOrientationIMU();
+        setM(DcMotor.RunMode.RUN_USING_ENCODER);
+        control.runToPosition(degrees, 5);
         stop();
     }
 

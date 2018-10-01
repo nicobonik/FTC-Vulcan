@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.Autonomous;
 
+import android.util.Log;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
@@ -12,14 +14,20 @@ public class VisionTest extends OpMode {
     private MineralVisionContour contourVision;
     private MineralVisionHough houghVision;
     public void init() {
-        contourVision = new MineralVisionContour();
-        contourVision.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
-        contourVision.setShowCountours(true);
-        contourVision.enable();
-        houghVision = new MineralVisionHough();
-        houghVision.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
-        houghVision.setShowCountours(true);
-        houghVision.enable();
+        try {
+            contourVision = new MineralVisionContour();
+            contourVision.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
+            contourVision.setShowCountours(true);
+            contourVision.enable();
+            houghVision = new MineralVisionHough();
+            houghVision.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
+            houghVision.setShowCountours(true);
+            houghVision.enable();
+        } catch (Exception e)
+        {
+            Log.e("VisionTest", "STACKTRACE");
+            Log.e("VisionTest", Log.getStackTraceString(e));
+        }
     }
 
     public void loop() {
