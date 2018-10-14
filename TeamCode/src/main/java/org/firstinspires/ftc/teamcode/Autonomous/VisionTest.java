@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.Autonomous;
 
-import android.util.Log;
-
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
@@ -13,38 +11,36 @@ import org.firstinspires.ftc.teamcode.Subsystems.MineralVisionHough;
 public class VisionTest extends OpMode {
     private MineralVisionContour contourVision;
     private MineralVisionHough houghVision;
+    private boolean contour = false;
+    private boolean hough = true;
     public void init() {
-        try {
+        if(contour) {
             contourVision = new MineralVisionContour();
             contourVision.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
             contourVision.setShowCountours(true);
             contourVision.enable();
+        } else if(hough) {
             houghVision = new MineralVisionHough();
             houghVision.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
             houghVision.setShowCountours(true);
+            houghVision.setTelem(telemetry);
             houghVision.enable();
-        } catch (Exception e)
-        {
-            Log.e("VisionTest", "STACKTRACE");
-            Log.e("VisionTest", Log.getStackTraceString(e));
         }
     }
 
     public void loop() {
-        try {
-            contourVision.setShowCountours(gamepad1.a);
-            houghVision.setShowCountours(gamepad1.b);
-            telemetry.addData("goldPosContour: ", contourVision.getGoldPos());
-            telemetry.addData("goldPosHough: ", houghVision.getGoldPos());
-        } catch (NullPointerException e) {
-            telemetry.addData("lineNo", e.getStackTrace()[0].getLineNumber());
-            telemetry.addData("file", e.getStackTrace()[0].getFileName());
+        if(contour) {
+            telemetry.addData("GoldPos", contourVision.getGoldPos());
+        } else if(hough) {
+            telemetry.addData("GoldPos", houghVision.getGoldPos());
         }
-        telemetry.update();
     }
 
     public void stop() {
-        contourVision.disable();
-        houghVision.disable();
+        if(contour) {
+            contourVision.disable();
+        } else if(hough) {
+            houghVision.disable();
+        }
     }
 }

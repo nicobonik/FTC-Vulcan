@@ -16,7 +16,7 @@ import java.util.List;
 
 public class MineralVisionContour extends OpenCVPipeline {
     private final int imageWidth = 1080;
-    private boolean showContours = true;
+    private boolean showContours = false;
     // To keep it such that we don't have to instantiate a new Mat every call to processFrame,
     // we declare the Mats up here and reuse them. This is easier on the garbage collector.
     private Mat hsv = new Mat();
