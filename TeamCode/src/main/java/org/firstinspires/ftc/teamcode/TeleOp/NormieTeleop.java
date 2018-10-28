@@ -6,26 +6,32 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
-import org.firstinspires.ftc.teamcode.Subsystems.IntakeLift;
+import org.firstinspires.ftc.teamcode.Subsystems.Arm;
+import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 
 @TeleOp(name="NormieDrive", group="Drive")
 public class NormieTeleop extends OpMode {
     protected Drivetrain drivetrain;
-    protected IntakeLift inlift;
+    protected Intake intake;
+    protected Arm arm;
     private double y;
 
     public void init() {
         drivetrain = new Drivetrain(
-                hardwareMap.dcMotor.get("front_left"),
-                hardwareMap.dcMotor.get("front_right"),
-                hardwareMap.dcMotor.get("back_left"),
-                hardwareMap.dcMotor.get("back_right")
+            hardwareMap.dcMotor.get("front_left"),
+            hardwareMap.dcMotor.get("front_right"),
+            hardwareMap.dcMotor.get("back_left"),
+            hardwareMap.dcMotor.get("back_right")
         );
-        inlift = new IntakeLift(new DcMotor[] {hardwareMap.dcMotor.get("arm1"), hardwareMap.dcMotor.get("arm2"), hardwareMap.dcMotor.get("arm3")},
-                hardwareMap.crservo.get("intake1"),
-                hardwareMap.crservo.get("intake2"),
-                hardwareMap.servo.get("door")
-                );
+        arm = new Arm(
+            new DcMotor[] {hardwareMap.dcMotor.get("arm1"),
+            hardwareMap.dcMotor.get("arm2")},
+            hardwareMap.dcMotor.get("extender")
+        );
+        intake = new Intake(
+            hardwareMap.dcMotor.get("intake"),
+            hardwareMap.servo.get("door")
+        );
         gamepad1.setJoystickDeadzone(0.05f);
     }
 
@@ -36,20 +42,20 @@ public class NormieTeleop extends OpMode {
             drivetrain.tempPower = Drivetrain.BASE_POWER;
         }
         if(gamepad1.a) {
-            inlift.intake(1);
+            intake.intake(1);
         } else if(gamepad1.b) {
-            inlift.intake(-1);
+            intake.intake(-1);
         } else {
-            inlift.intake(0);
+            intake.intake(0);
         }
         if(gamepad1.x) {
-            inlift.door(true);
+            intake.door(true);
         } else if(gamepad1.y) {
-            inlift.door(false);
+            intake.door(false);
         }
         double dy = gamepad2.left_stick_y - y;
         y = Range.clip(y + Range.clip(dy/20, -0.05, 0.05), -1.0, 1.0);
-        inlift.swing(y);
+        arm.swing(y);
         drivetrain.arcadeDrive(gamepad1.left_stick_y, gamepad1.right_stick_x);
 
     }

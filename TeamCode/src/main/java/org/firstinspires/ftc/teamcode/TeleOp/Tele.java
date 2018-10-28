@@ -46,7 +46,7 @@ public class Tele extends OpMode {
         } else {
             arcadeDrive(gamepad1.left_stick_y, gamepad1.right_stick_x);
         }
-        if(keys[16]) {
+        if(keys[15]) {
             checkSequences();
         }
         if(!unlocked) {

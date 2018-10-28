@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
-import org.firstinspires.ftc.teamcode.Subsystems.IntakeLift;
+import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 
 @Autonomous(name = "ServoTest", group="Auto")
 public class ServoTest extends LinearOpMode {

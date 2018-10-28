@@ -40,10 +40,10 @@ public class Drivetrain {
             motors[motor].setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         }
 
-        motors[0].setDirection(DcMotor.Direction.REVERSE);
-        motors[1].setDirection(DcMotor.Direction.FORWARD);
-        motors[2].setDirection(DcMotor.Direction.REVERSE);
-        motors[3].setDirection(DcMotor.Direction.FORWARD);
+        motors[0].setDirection(DcMotor.Direction.FORWARD);
+        motors[1].setDirection(DcMotor.Direction.REVERSE);
+        motors[2].setDirection(DcMotor.Direction.FORWARD);
+        motors[3].setDirection(DcMotor.Direction.REVERSE);
     }
 
     public void setupGyro(ModernRoboticsI2cGyro gyr) {
@@ -81,10 +81,10 @@ public class Drivetrain {
     public void arcadeDrive(double forward, double turn) {
         double turn2 = turnMult * tempPower * (forward <= 0 ? 1 : -1) * turn;
         double forward2 = tempPower * (forward / 0.7) * (0.3 * Math.pow(forward, 6) + 0.4);
-        double v[] = {forward2 + turn2,
-                forward2 - turn2,
-                forward2 + turn2,
-                forward2 - turn2};
+        double v[] = {forward2 + turn2, //fl
+                forward2 - turn2, //fr
+                forward2 + turn2, //bl
+                forward2 - turn2};  //br
         double max = Math.max(Math.abs(v[3]), Math.max(Math.abs(v[2]), Math.max(Math.abs(v[1]), Math.abs(v[0]))));
         if(max > tempPower) {
             for (int i = 0; i < 4; i++) {
@@ -96,6 +96,27 @@ public class Drivetrain {
             }
         }
     }
+
+    public void mecanumDrive(double forward, double strafe, double turn, double multiplier) {
+        double vd = Math.hypot(forward, strafe);
+        double theta = Math.atan2(forward, strafe) - (Math.PI / 4);
+        double[] v = {
+                vd * Math.sin(theta) + turn,
+                vd * Math.cos(theta) - turn,
+                vd * Math.cos(theta) + turn,
+                vd * Math.sin(theta) - turn
+        };
+        double max = Math.max(Math.max(Math.max(Math.max(Math.abs(v[0]), Math.abs(v[1])), Math.abs(v[2])), Math.abs(v[3])), 1);
+        if ((v[0] > 0 && v[1] > 0 && v[2] > 0 && v[3] > 0) || (v[0] < 0 && v[1] < 0 && v[2] < 0 && v[3] < 0)) {
+            if (multiplier < 0.6) {
+                multiplier = 0.6;
+            }
+        }
+        for(int i = 0; i < 4; i++) {
+            motors[i].setPower(multiplier * v[i] / max);
+        }
+    }
+
 
     public void driveTimed(double seconds, double forward, double turn) {
         ElapsedTime time = new ElapsedTime();

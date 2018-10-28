@@ -6,12 +6,12 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
-import org.firstinspires.ftc.teamcode.Subsystems.IntakeLift;
+import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 
 @Autonomous(name = "TestAutonomous", group="Auto")
 public class Auto extends LinearOpMode{
     private Drivetrain drivetrain;
-    private IntakeLift inlift;
+    private Intake inlift;
     private ElapsedTime Runtime = new ElapsedTime();
     public void runOpMode() {
         drivetrain = new Drivetrain(
@@ -20,10 +20,10 @@ public class Auto extends LinearOpMode{
                 hardwareMap.dcMotor.get("back_left"),
                 hardwareMap.dcMotor.get("back_right")
         );
-        inlift = new IntakeLift(new DcMotor[] {hardwareMap.dcMotor.get("arm1"), hardwareMap.dcMotor.get("arm2"), hardwareMap.dcMotor.get("arm3")},
+        /*inlift = new IntakeLift(new DcMotor[] {hardwareMap.dcMotor.get("arm1"), hardwareMap.dcMotor.get("arm2"), hardwareMap.dcMotor.get("arm3")},
                 hardwareMap.dcMotor.get("intake"),
                 hardwareMap.servo.get("door")
-                );
+                );*/
         /*inlift = new IntakeLift(hardwareMap.dcMotor.get("arm"),
                 hardwareMap.dcMotor.get("intake"),
                 hardwareMap.servo.get("hook"));*/
