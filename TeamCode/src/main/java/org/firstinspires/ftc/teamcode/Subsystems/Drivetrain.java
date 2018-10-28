@@ -20,14 +20,16 @@ public class Drivetrain {
     private static final int encTicks = 1440;
     private static final int ticksPerInch = (int)(encTicks / wheelCirc);
     private static final double turnMult = 0.5;
+    private double pX, pY;
     public static final double BASE_POWER = 0.9;
     public double tempPower = BASE_POWER;
-    private double pX, pY;
     private DcMotor motors[] = new DcMotor[4];
     private BNO055IMU imu;
     private BNO055IMU.Parameters parameters;
     private Orientation zeroOrientation;
     private ModernRoboticsI2cGyro gyro;
+    public PID drivePID;
+    public PID turnPID;
 
     public Drivetrain(DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight) {
         motors[0] = frontLeft;
@@ -44,6 +46,32 @@ public class Drivetrain {
         motors[1].setDirection(DcMotor.Direction.REVERSE);
         motors[2].setDirection(DcMotor.Direction.FORWARD);
         motors[3].setDirection(DcMotor.Direction.REVERSE);
+
+        drivePID = new PID(1, 0, 0, 0, new PowerControl() {
+            public void setPower(double power) {
+                for(int i = 0; i < 4; i++) {
+                    motors[i].setPower(power);
+                }
+            }
+            public double getPosition() {
+                double sum = 0;
+                for(int i = 0; i < 4; i++) {
+                    sum += motors[i].getCurrentPosition() * (i % 2 == 0 ? 1 : -1);
+                }
+                return sum / 4;
+            }
+        });
+
+        turnPID = new PID(0.4, 0.7, 0.7, 0, new PowerControl() {
+            public void setPower(double power) {
+                for (int motor = 0; motor < 4; motor++) {
+                    motors[motor].setPower(Range.clip(power / 180, -1.0, 1.0) * (motor % 2 == 0 ? -1 : 1));
+                }
+            }
+            public double getPosition() {
+                return gyro.getHeading();
+            }
+        });
     }
 
     public void setupGyro(ModernRoboticsI2cGyro gyr) {
@@ -130,28 +158,17 @@ public class Drivetrain {
     public void driveEnc(double inches) {
         setM(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setM(DcMotor.RunMode.RUN_USING_ENCODER);
-        PowerControl control = new PowerControl() {
-            public void setPower(double power) {
-                for(int i = 0; i < 4; i++) {
-                    motors[i].setPower(power);
-                }
-            }
-            public double getPosition() {
-                double sum = 0;
-                for(int i = 0; i < 4; i++) {
-                    sum += motors[i].getCurrentPosition() * (i % 2 == 0 ? 1 : -1);
-                }
-                return sum / 4;
-            }
-        };
-        PID pid = new PID(1, 0, 0, 0, control);
-        pid.runToPosition(inches * ticksPerInch, 2);
-        while(pid.busy) {}
-        stop();
+        drivePID.runToPosition(inches * ticksPerInch, 2);
     }
 
     public void driveStraight(double inches) {
-        // todo
+        resetOrientationGyro();
+        driveEnc(inches);
+        while(drivePID.busy) {
+            if(Math.abs(gyro.getHeading()) > 1) {
+                turnGyro(-gyro.getHeading());
+            }
+        }
     }
 
     public void turnEnc(int degrees) {
@@ -167,19 +184,9 @@ public class Drivetrain {
     }
 
     public void turnGyro(int degrees) {
-        PID control = new PID(0.4, 0.7, 0.7, 0, new PowerControl() {
-            public void setPower(double power) {
-                for (int motor = 0; motor < 4; motor++) {
-                    motors[motor].setPower(Range.clip(power / 180, -1.0, 1.0) * (motor % 2 == 0 ? -1 : 1));
-                }
-            }
-            public double getPosition() {
-                return gyro.getHeading();
-            }
-        });
         resetOrientationGyro();
         setM(DcMotor.RunMode.RUN_USING_ENCODER);
-        control.runToPosition(degrees, 5);
+        turnPID.runToPosition(degrees, 2);
         stop();
     }
 
