@@ -129,12 +129,24 @@ public class Drivetrain {
 
     public void driveEnc(double inches) {
         setM(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        setM(DcMotor.RunMode.RUN_TO_POSITION); // alternatively, get current position and add to it - is faster
-        for (int motor = 0; motor < 4; motor++) {
-            motors[motor].setPower(tempPower);
-            motors[motor].setTargetPosition(-(int)(inches * ticksPerInch));
-        }
-        while (busy()) {}
+        setM(DcMotor.RunMode.RUN_USING_ENCODER);
+        PowerControl control = new PowerControl() {
+            public void setPower(double power) {
+                for(int i = 0; i < 4; i++) {
+                    motors[i].setPower(power);
+                }
+            }
+            public double getPosition() {
+                double sum = 0;
+                for(int i = 0; i < 4; i++) {
+                    sum += motors[i].getCurrentPosition() * (i % 2 == 0 ? 1 : -1);
+                }
+                return sum / 4;
+            }
+        };
+        PID pid = new PID(1, 0, 0, 0, control);
+        pid.runToPosition(inches * ticksPerInch, 2);
+        while(pid.busy) {}
         stop();
     }
 
@@ -155,7 +167,7 @@ public class Drivetrain {
     }
 
     public void turnGyro(int degrees) {
-        PID control = new PID(0.4, 0.7, 0.7, 0, new powerControl() {
+        PID control = new PID(0.4, 0.7, 0.7, 0, new PowerControl() {
             public void setPower(double power) {
                 for (int motor = 0; motor < 4; motor++) {
                     motors[motor].setPower(Range.clip(power / 180, -1.0, 1.0) * (motor % 2 == 0 ? -1 : 1));
@@ -172,7 +184,7 @@ public class Drivetrain {
     }
 
     public void turnIMU(int degrees) {
-        PID control = new PID(0.4, 0.7, 0.7, 0, new powerControl() {
+        PID control = new PID(0.4, 0.7, 0.7, 0, new PowerControl() {
             public void setPower(double power) {
                 for (int motor = 0; motor < 4; motor++) {
                     motors[motor].setPower(Range.clip(power / 180, -1.0, 1.0) * (motor % 2 == 0 ? -1 : 1));

@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 public class Arm {
     private final double baseArmLength = 16;
@@ -17,20 +16,28 @@ public class Arm {
         this.arm = arm;
         this.extender = extender;
 
-        arm[0].setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        arm[1].setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        arm[0].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        arm[1].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         arm[0].setDirection(DcMotor.Direction.FORWARD);
         arm[1].setDirection(DcMotor.Direction.REVERSE);
     }
 
     public void swing(double power) {
-        int pos = Math.max(position + (int)((power / 0.7) * (0.3 * Math.pow(power, 6) + 0.4) * 10), (int)(Math.atan((armHeight - omniRadius) / (baseArmLength + ((extender.getCurrentPosition() * 2 * Math.PI * extensionRadius) / ticksPerRevolution))) * ticksPerRevolution / 360));
-        pos = Math.min(pos, 0);
-        for (int i = 0; i < 3; i++) {
-            arm[i].setTargetPosition(pos);
-            arm[i].setPower(1.0);
-        }
+        PowerControl control = new PowerControl() {
+            public void setPower(double power) {
+                arm[0].setPower(power);
+                arm[1].setPower(power);
+            }
+            public double getPosition() {
+                return arm[0].getCurrentPosition();
+            }
+        };
+
+        PID pid = new PID(1, 0, 0, 0, control);
+        int pos = Math.min(position + (int)((power / 0.7) * (0.3 * Math.pow(power, 6) + 0.4) * 10), (int)(Math.atan((armHeight - omniRadius) / (baseArmLength + ((extender.getCurrentPosition() * 2 * Math.PI * extensionRadius) / ticksPerRevolution))) * ticksPerRevolution / 360));
+        pos = Math.max(pos, 0);
+        pid.runToPosition(pos, 2);
     }
 
     public void swing(boolean up) {
@@ -50,5 +57,20 @@ public class Arm {
             }
         }
         extender.setPower(0.9);
+    }
+}
+
+class Runner implements Runnable {
+    PID pid;
+    public Runner(PID pid) {
+        this.pid = pid;
+    }
+
+    public void setPosition(double position) {
+
+    }
+
+    public void run() {
+
     }
 }

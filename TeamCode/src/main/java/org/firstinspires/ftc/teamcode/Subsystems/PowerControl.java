@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
-public interface powerControl {
+public interface PowerControl {
     void setPower(double power);
     double getPosition();
 }
