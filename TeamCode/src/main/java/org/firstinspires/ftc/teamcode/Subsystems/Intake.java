@@ -15,8 +15,8 @@ public class Intake {
         this.door = door;
     }
 
-    public void intake(int direction) {
-        intake.setPower(direction);
+    public void intake(double power) {
+        intake.setPower(power);
     }
 
     public void stop() {

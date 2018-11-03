@@ -229,6 +229,8 @@ public class Drivetrain {
     }
 
     public void stop() {
+        driveEnc(0);
+        turnGyro(0);
         arcadeDrive(0,0);
     }
 
@@ -251,5 +253,9 @@ public class Drivetrain {
             }
         }
         return false;
+    }
+
+    public void whileBusy() {
+        while(drivePID.busy || turnPID.busy) {}
     }
 }
