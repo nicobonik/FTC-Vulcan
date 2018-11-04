@@ -43,13 +43,13 @@ public class Arm {
         });
     }
 
-    public void swing(double power) {
+    public void swing(double power) throws InterruptedException {
         position += power * 15;
-        int pos = Math.max(position, 0);
-        swingPID.runToPosition(pos, 2);
+        position = Math.max(position, 0);
+        swingPID.runToPosition(position, 2);
     }
 
-    public void swing(boolean up) {
+    public void swing(boolean up) throws InterruptedException {
         swingPID.runToPosition(up ? ticksPerRevolution / 4 : 0, 2);
     }
 
@@ -57,11 +57,11 @@ public class Arm {
         extender.setPower(power);
     }
 
-    public void extend(boolean out) {
+    public void extend(boolean out) throws InterruptedException {
         extendPID.runToPosition(out ? maximumExtension : 0, 5);
     }
 
-    public void extendDist(double inches) {
+    public void extendDist(double inches) throws InterruptedException {
         extendPID.runToPosition((extender.getCurrentPosition() + inches * revsPerInch * ticksPerRevolution), 5);
     }
 

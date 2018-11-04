@@ -35,7 +35,7 @@ public class Auto extends LinearOpMode{
         waitForStart();
         Runtime.reset();
         //unfold bot
-        arm.swing(true);
+        /*arm.swing(true);
         arm.whileBusy();
         //extend slides
         arm.extendDist(10);
@@ -46,7 +46,7 @@ public class Auto extends LinearOpMode{
         //retract slides
         arm.extend(false);
         //fold slides
-        arm.swing(false);
+        arm.swing(false);*/
         //take video of sampling field, find most commonly detected gold position
         houghVision.enable();
         for(int i = 0; i < 10; i++) {
@@ -61,7 +61,7 @@ public class Auto extends LinearOpMode{
             }
         }
         //drive through gold position
-        drivetrain.turnGyro(45 * (argmax - 1));
+        /*drivetrain.turnGyro(45 * (argmax - 1));
         drivetrain.whileBusy();
         drivetrain.driveEnc(6);
         drivetrain.whileBusy();
@@ -82,7 +82,7 @@ public class Auto extends LinearOpMode{
         drivetrain.turnGyro(135);
         drivetrain.whileBusy();
         drivetrain.driveEnc(48);
-        drivetrain.whileBusy();
+        drivetrain.whileBusy();*/
         drivetrain.stop();
     }
 }

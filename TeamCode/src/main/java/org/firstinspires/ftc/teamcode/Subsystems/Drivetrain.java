@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
+import android.util.Log;
+
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -10,6 +12,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+
+import static android.content.ContentValues.TAG;
 
 public class Drivetrain {
     //todo: have IMU/gyro stabilize driving
@@ -29,7 +33,7 @@ public class Drivetrain {
     private Orientation zeroOrientation;
     private ModernRoboticsI2cGyro gyro;
     public PID drivePID;
-    public PID turnPID;
+    //public PID turnPID;
 
     public Drivetrain(DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight) {
         motors[0] = frontLeft;
@@ -46,23 +50,28 @@ public class Drivetrain {
         motors[1].setDirection(DcMotor.Direction.REVERSE);
         motors[2].setDirection(DcMotor.Direction.FORWARD);
         motors[3].setDirection(DcMotor.Direction.REVERSE);
-
-        drivePID = new PID(1, 0, 0, 0, new PowerControl() {
+        Log.e(TAG, "Custom: motors initialized");
+        PowerControl driveCtrl = new PowerControl() {
             public void setPower(double power) {
-                for(int i = 0; i < 4; i++) {
+                for (int i = 0; i < 4; i++) {
                     motors[i].setPower(power);
                 }
             }
+
             public double getPosition() {
                 double sum = 0;
-                for(int i = 0; i < 4; i++) {
+                for (int i = 0; i < 4; i++) {
                     sum += motors[i].getCurrentPosition() * (i % 2 == 0 ? 1 : -1);
                 }
                 return sum / 4;
             }
-        });
+        };
+        Log.e(TAG, "Custom: control initialized");
 
-        turnPID = new PID(0.4, 0.7, 0.7, 0, new PowerControl() {
+        drivePID = new PID(1, 0, 0, 0, driveCtrl);
+
+        Log.e(TAG, "Custom: PID initialized");
+        /*turnPID = new PID(0.4, 0.7, 0.7, 0, new PowerControl() {
             public void setPower(double power) {
                 for (int motor = 0; motor < 4; motor++) {
                     motors[motor].setPower(Range.clip(power / 180, -1.0, 1.0) * (motor % 2 == 0 ? -1 : 1));
@@ -71,7 +80,7 @@ public class Drivetrain {
             public double getPosition() {
                 return gyro.getHeading();
             }
-        });
+        });*/
     }
 
     public void setupGyro(ModernRoboticsI2cGyro gyr) {
@@ -155,20 +164,20 @@ public class Drivetrain {
         stop();
     }
 
-    public void driveEnc(double inches) {
+    public void driveEnc(double inches) throws InterruptedException {
         setM(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setM(DcMotor.RunMode.RUN_USING_ENCODER);
         drivePID.runToPosition(inches * ticksPerInch, 2);
     }
 
-    public void driveStraight(double inches) {
+    public void driveStraight(double inches) throws InterruptedException {
         resetOrientationGyro();
         driveEnc(inches);
-        while(drivePID.busy) {
+        /*while(drivePID.busy) {
             if(Math.abs(gyro.getHeading()) > 1) {
                 turnGyro(-gyro.getHeading());
             }
-        }
+        }*/
     }
 
     public void turnEnc(int degrees) {
@@ -186,11 +195,11 @@ public class Drivetrain {
     public void turnGyro(int degrees) {
         resetOrientationGyro();
         setM(DcMotor.RunMode.RUN_USING_ENCODER);
-        turnPID.runToPosition(degrees, 2);
+        //turnPID.runToPosition(degrees, 2);
         stop();
     }
 
-    public void turnIMU(int degrees) {
+    public void turnIMU(int degrees) throws InterruptedException {
         PID control = new PID(0.4, 0.7, 0.7, 0, new PowerControl() {
             public void setPower(double power) {
                 for (int motor = 0; motor < 4; motor++) {
@@ -207,10 +216,10 @@ public class Drivetrain {
         stop();
     }
 
-    public void driveTo(double x, double y) {
+    public void driveTo(double x, double y) throws InterruptedException {
         double distance = Math.sqrt((x - pX) * (x - pX) + (y - pY) * (y - pY));
         double angle = Math.atan((y - pY) / (x - pX));
-        turnEnc((int)angle);
+        turnGyro((int)angle);
         driveEnc(distance);
     }
 
@@ -229,8 +238,8 @@ public class Drivetrain {
     }
 
     public void stop() {
-        driveEnc(0);
-        turnGyro(0);
+        //driveEnc(0);
+        //turnGyro(0);
         arcadeDrive(0,0);
     }
 
@@ -256,6 +265,6 @@ public class Drivetrain {
     }
 
     public void whileBusy() {
-        while(drivePID.busy || turnPID.busy) {}
+        //while(drivePID.busy || turnPID.busy) {}
     }
 }

@@ -1,6 +1,11 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
+import android.content.ContentValues;
+import android.util.Log;
+
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import static org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity.TAG;
 
 public class PID {
     private double Kp, Ki, Kd;
@@ -10,7 +15,7 @@ public class PID {
     private double lastError = 0;
     private double lastTime = 0;
     private double bias;
-    Thread runner;
+    private Thread runner;
     private ElapsedTime timer = new ElapsedTime();
     private PowerControl control;
     public boolean busy = false;
@@ -20,18 +25,16 @@ public class PID {
         Kd = kd;
         bias = b;
         control = ctrl;
+        Log.e(TAG, "Custom: PID coefficients initialized");
         runner = new Thread() {
             public void run() {
-                while (Math.abs(control.getPosition() - position) > margin) {
+                while (!this.isInterrupted() && Math.abs(control.getPosition() - position) > margin) {
                     control.setPower(getResponse(control.getPosition(), position));
-                    if(this.isInterrupted()) {
-                        control.setPower(0);
-                        break;
-                    }
                 }
                 control.setPower(0);
             }
         };
+        Log.e(TAG, "Custom: Thread initialized");
     }
 
     private double getResponse(double currentValue, double target) {
@@ -51,10 +54,13 @@ public class PID {
         return response;
     }
 
-    public void runToPosition(double position, double margin) {
+    public void runToPosition(double position, double margin) throws InterruptedException {
         timer.reset();
         lastTime = timer.time();
-        runner.interrupt();
+        if(runner != null) {
+            runner.interrupt();
+            runner.join();
+        }
         this.position = position;
         this.margin = margin;
         runner.start();

@@ -23,7 +23,7 @@ public class NormieTeleop extends OpMode {
             hardwareMap.dcMotor.get("back_left"),
             hardwareMap.dcMotor.get("back_right")
         );
-        arm = new Arm(
+        /*arm = new Arm(
             new DcMotor[] {hardwareMap.dcMotor.get("arm1"),
             hardwareMap.dcMotor.get("arm2")},
             hardwareMap.dcMotor.get("extender")
@@ -31,7 +31,7 @@ public class NormieTeleop extends OpMode {
         intake = new Intake(
             hardwareMap.dcMotor.get("intake"),
             hardwareMap.servo.get("door")
-        );
+        );*/
         gamepad1.setJoystickDeadzone(0.05f);
     }
 
@@ -42,21 +42,21 @@ public class NormieTeleop extends OpMode {
             drivetrain.tempPower = Drivetrain.BASE_POWER;
         }
         if(gamepad1.a) {
-            intake.intake(1);
+            //intake.intake(1);
         } else if(gamepad1.b) {
-            intake.intake(-1);
+            //intake.intake(-1);
         } else {
-            intake.intake(0);
+            //intake.intake(0);
         }
         if(gamepad1.x) {
-            intake.door(true);
+            //intake.door(true);
         } else if(gamepad1.y) {
-            intake.door(false);
+            //intake.door(false);
         }
-        double dy = gamepad2.left_stick_y - y;
+        /*double dy = gamepad2.left_stick_y - y;
         y = Range.clip(y + Range.clip(dy/20, -0.05, 0.05), -1.0, 1.0);
-        arm.swing(y);
-        drivetrain.arcadeDrive(gamepad1.left_stick_y, gamepad1.right_stick_x);
+        arm.swing(y);*/
+        drivetrain.mecanumDrive(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x, 0.8);
 
     }
 
