@@ -56,7 +56,7 @@ public class NormieTeleop extends OpMode {
         /*double dy = gamepad2.left_stick_y - y;
         y = Range.clip(y + Range.clip(dy/20, -0.05, 0.05), -1.0, 1.0);
         arm.swing(y);*/
-        drivetrain.mecanumDrive(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x, 0.8);
+        drivetrain.mecanumDrive(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x, 0.8);
 
     }
 
