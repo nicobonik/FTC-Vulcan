@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.Autonomous;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -24,7 +25,8 @@ public class Auto extends LinearOpMode{
                 hardwareMap.dcMotor.get("front_left"),
                 hardwareMap.dcMotor.get("front_right"),
                 hardwareMap.dcMotor.get("back_left"),
-                hardwareMap.dcMotor.get("back_right")
+                hardwareMap.dcMotor.get("back_right"),
+                hardwareMap.get(BNO055IMU.class, "imu")
         );
         arm = new Arm(new DcMotor[] {hardwareMap.dcMotor.get("arm_left"), hardwareMap.dcMotor.get("arm_right")}, hardwareMap.dcMotor.get("extender"));
         intake = new Intake(hardwareMap.dcMotor.get("intake"), hardwareMap.servo.get("door"));
@@ -35,18 +37,19 @@ public class Auto extends LinearOpMode{
         waitForStart();
         Runtime.reset();
         //unfold bot
-        /*arm.swing(true);
+        arm.swing(true);
         arm.whileBusy();
         //extend slides
         arm.extendDist(10);
         arm.whileBusy();
         //drive forward
+        drivetrain.resetOrientation(); //reset IMU because robot has landed
         drivetrain.driveEnc(4);
         drivetrain.whileBusy();
         //retract slides
         arm.extend(false);
         //fold slides
-        arm.swing(false);*/
+        arm.swing(false);
         //take video of sampling field, find most commonly detected gold position
         houghVision.enable();
         for(int i = 0; i < 10; i++) {
@@ -61,16 +64,16 @@ public class Auto extends LinearOpMode{
             }
         }
         //drive through gold position
-        /*drivetrain.turnGyro(45 * (argmax - 1));
+        /*drivetrain.turn(45 * (argmax - 1));
         drivetrain.whileBusy();
         drivetrain.driveEnc(6);
         drivetrain.whileBusy();
         //drive to depot
-        drivetrain.turnGyro(-90 * (argmax - 1));
+        drivetrain.turn(-90 * (argmax - 1));
         drivetrain.whileBusy();
         drivetrain.driveEnc(6);
         drivetrain.whileBusy();
-        drivetrain.turnGyro(45 * (argmax - 1));
+        drivetrain.turn(45 * (argmax - 1));
         drivetrain.whileBusy();
         drivetrain.driveEnc(24);
         drivetrain.whileBusy();
@@ -79,7 +82,7 @@ public class Auto extends LinearOpMode{
         sleep(500);
         intake.stop();
         //park
-        drivetrain.turnGyro(135);
+        drivetrain.turn(135);
         drivetrain.whileBusy();
         drivetrain.driveEnc(48);
         drivetrain.whileBusy();*/

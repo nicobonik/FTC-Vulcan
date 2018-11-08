@@ -9,13 +9,12 @@ import static org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerA
 
 public class PID {
     private double Kp, Ki, Kd;
-    private double position = 0;
-    private double margin = 0;
     private double integral = 0;
     private double lastError = 0;
     private double lastTime = 0;
     private double bias;
-    private Thread runner;
+    private double minPos, maxPos;
+    private boolean cyclic;
     private ElapsedTime timer = new ElapsedTime();
     private PowerControl control;
     public boolean busy = false;
@@ -25,21 +24,37 @@ public class PID {
         Kd = kd;
         bias = b;
         control = ctrl;
-        Log.e(TAG, "Custom: PID coefficients initialized");
-        runner = new Thread() {
-            public void run() {
-                while (!this.isInterrupted() && Math.abs(control.getPosition() - position) > margin) {
-                    control.setPower(getResponse(control.getPosition(), position));
-                }
-                control.setPower(0);
-            }
-        };
-        Log.e(TAG, "Custom: Thread initialized");
+        cyclic = false;
+    }
+
+    public PID(double kp, double ki, double kd, double b, PowerControl ctrl, double min, double max) {
+        Kp = kp;
+        Ki = ki;
+        Kd = kd;
+        bias = b;
+        control = ctrl;
+        minPos = min;
+        maxPos = max;
+        cyclic = true;
+    }
+
+    public void reset() {
+        integral = 0;
+        lastError = 0;
+        timer.reset();
+        lastTime = timer.time();
     }
 
     private double getResponse(double currentValue, double target) {
         double error = currentValue - target;
-
+        if(cyclic) {
+            while(error > maxPos - minPos) {
+                error -= maxPos - minPos;
+            }
+            while(error < minPos - maxPos) {
+                error += maxPos - minPos;
+            }
+        }
         //Proportional
         double response = (Kp * error);
         //Integral
@@ -54,23 +69,19 @@ public class PID {
         return response;
     }
 
-    public void runToPosition(double position, double margin) throws InterruptedException {
-        timer.reset();
-        lastTime = timer.time();
-        if(runner != null) {
-            runner.interrupt();
-            runner.join();
+    public void runToPosition(double target, double margin) {
+        reset();
+        while (Math.abs(control.getPosition() - target) > margin) {
+            control.setPower(getResponse(control.getPosition(), target));
         }
-        this.position = position;
-        this.margin = margin;
-        runner.start();
+        control.setPower(0);
     }
 
-    public void maintainOnce(double position, double margin) {
-        timer.reset();
-        lastTime = timer.time();
+    public boolean maintainOnce(double position, double margin) {
         if (Math.abs(control.getPosition() - position) > margin) {
             control.setPower(getResponse(control.getPosition(), position));
+            return true;
         }
+        return false;
     }
 }

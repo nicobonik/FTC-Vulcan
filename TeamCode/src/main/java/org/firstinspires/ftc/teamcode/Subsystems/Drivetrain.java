@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
-import android.util.Log;
-
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -13,29 +11,26 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
-import static android.content.ContentValues.TAG;
-
 public class Drivetrain {
-    //todo: have IMU/gyro stabilize driving
-    private static final int wheelDiam = 4;
-    private static final double wheelCirc = Math.PI * wheelDiam;
-    private static final double botDiam = 17; // placeholder
-    private static final double botCirc = Math.PI * botDiam;
-    private static final int encTicks = 1440;
-    private static final int ticksPerInch = (int)(encTicks / wheelCirc);
-    private static final double turnMult = 0.5;
-    private double pX, pY;
+    private static final double wheelCirc = Math.PI * 4;
+    //private static final double botDiam = 17; // placeholder
+    private static final double ticksPerInch = 537.6 / wheelCirc;
+    private static final double turnMult = 0.8;
+    private double[] speeds = new double[4];
+    private double ly, lx, rx;
+    private int driveTarget, driveMargin, turnTarget, turnMargin;
+    private volatile boolean drivePIDActive, turnPIDActive, running;
     public static final double BASE_POWER = 0.9;
     public double tempPower = BASE_POWER;
-    private DcMotor motors[] = new DcMotor[4];
+    private DcMotor[] motors = new DcMotor[4];
     private BNO055IMU imu;
     private BNO055IMU.Parameters parameters;
     private Orientation zeroOrientation;
-    private ModernRoboticsI2cGyro gyro;
-    public PID drivePID;
-    //public PID turnPID;
+    //private ModernRoboticsI2cGyro gyro;
+    private Thread systemThread;
+    public PID drivePID, turnPID;
 
-    public Drivetrain(DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight) {
+    public Drivetrain(DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight, BNO055IMU IMU) {
         motors[0] = frontLeft;
         motors[1] = frontRight;
         motors[2] = backLeft;
@@ -50,11 +45,11 @@ public class Drivetrain {
         motors[1].setDirection(DcMotor.Direction.REVERSE);
         motors[2].setDirection(DcMotor.Direction.FORWARD);
         motors[3].setDirection(DcMotor.Direction.REVERSE);
-        Log.e(TAG, "Custom: motors initialized");
-        PowerControl driveCtrl = new PowerControl() {
+
+        drivePID = new PID(1, 0, 0, 0, new PowerControl() {
             public void setPower(double power) {
                 for (int i = 0; i < 4; i++) {
-                    motors[i].setPower(power);
+                    speeds[i] += power;
                 }
             }
 
@@ -65,31 +60,73 @@ public class Drivetrain {
                 }
                 return sum / 4;
             }
-        };
-        Log.e(TAG, "Custom: control initialized");
+        });
 
-        drivePID = new PID(1, 0, 0, 0, driveCtrl);
-
-        Log.e(TAG, "Custom: PID initialized");
-        /*turnPID = new PID(0.4, 0.7, 0.7, 0, new PowerControl() {
+        turnPID = new PID(0.4, 0.7, 0.7, 0, new PowerControl() {
             public void setPower(double power) {
-                for (int motor = 0; motor < 4; motor++) {
-                    motors[motor].setPower(Range.clip(power / 180, -1.0, 1.0) * (motor % 2 == 0 ? -1 : 1));
+                for (int i = 0; i < 4; i++) {
+                    speeds[i] += Range.clip(power / 180, -1.0, 1.0) * (i % 2 == 0 ? -1 : 1);
                 }
             }
             public double getPosition() {
-                return gyro.getHeading();
+                return imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
             }
-        });*/
+        }, -180, 180);
+
+        setupIMU(IMU);
+
+        drivePIDActive = false;
+        turnPIDActive = false;
+        driveTarget = 0;
+        driveMargin = 0;
+        turnTarget = 0;
+        turnMargin = 0;
+        ly = 0;
+        lx = 0;
+        rx = 0;
+
+        systemThread = new Thread() {
+            @Override
+            public void run() {
+                while(running) {
+                    mecanumDrive(-ly, lx, rx, 0.8);
+                    if(drivePIDActive) {
+                        for(int i = 0; i < 4; i++) {
+                            speeds[i] = 0;
+                        }
+                        drivePIDActive = drivePID.maintainOnce(driveTarget, driveMargin);
+                    }
+                    if(turnPIDActive) {
+                        turnPIDActive = turnPID.maintainOnce(turnTarget, turnMargin);
+                    }
+                    double max = Math.max(Math.max(Math.max(Math.max(Math.abs(speeds[0]), Math.abs(speeds[1])), Math.abs(speeds[2])), Math.abs(speeds[3])), 1);
+                    for (int i = 0; i < 4; i++) {
+                        motors[i].setPower(speeds[i] / max);
+                    }
+                }
+                arcadeDrive(0,0);
+            }
+        };
     }
 
-    public void setupGyro(ModernRoboticsI2cGyro gyr) {
+    public void init() {
+        running = true;
+        systemThread.start();
+    }
+
+    public void setGamepadState(double ly, double lx, double rx) {
+        this.ly = ly;
+        this.lx = lx;
+        this.rx = rx;
+    }
+
+    /*public void setupGyro(ModernRoboticsI2cGyro gyr) {
         gyro = gyr;
         gyro.calibrate();
         while(gyro.isCalibrating()) {}
-    }
+    }*/
 
-    public void setupIMU(BNO055IMU adaIMU) throws InterruptedException {
+    public void setupIMU(BNO055IMU adaIMU) {
         parameters = new BNO055IMU.Parameters();
         parameters.mode = BNO055IMU.SensorMode.IMU;
         parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
@@ -99,63 +136,73 @@ public class Drivetrain {
         imu = adaIMU;
 
         imu.initialize(parameters);
-        while (!imu.isGyroCalibrated())
-        {
-            Thread.sleep(50);
-        }
-        resetOrientationIMU();
+        while (!imu.isGyroCalibrated()) {}
+        resetOrientation();
     }
 
-    private void resetOrientationGyro() {
+    /*public void resetOrientationGyro() {
         gyro.resetZAxisIntegrator();
-    }
+    }*/
 
-    private void resetOrientationIMU()
+    public void resetOrientation()
     {
         zeroOrientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
     }
 
     public void arcadeDrive(double forward, double turn) {
-        double turn2 = turnMult * tempPower * (forward <= 0 ? 1 : -1) * turn;
-        double forward2 = tempPower * (forward / 0.7) * (0.3 * Math.pow(forward, 6) + 0.4);
-        double v[] = {forward2 + turn2, //fl
-                forward2 - turn2, //fr
-                forward2 + turn2, //bl
-                forward2 - turn2};  //br
-        double max = Math.max(Math.abs(v[3]), Math.max(Math.abs(v[2]), Math.max(Math.abs(v[1]), Math.abs(v[0]))));
-        if(max > tempPower) {
-            for (int i = 0; i < 4; i++) {
-                motors[i].setPower((v[i] / max));
+        if(!drivePIDActive) {
+            double turn2 = turnMult * tempPower * (forward <= 0 ? 1 : -1) * turn;
+            double forward2 = tempPower * (forward / 0.7) * (0.3 * Math.pow(forward, 6) + 0.4);
+            double v[] = {forward2 + turn2, //fl
+                    forward2 - turn2, //fr
+                    forward2 + turn2, //bl
+                    forward2 - turn2};  //br
+            double max = Math.max(Math.abs(v[3]), Math.max(Math.abs(v[2]), Math.max(Math.abs(v[1]), Math.abs(v[0]))));
+            if (max > tempPower) {
+                for (int i = 0; i < 4; i++) {
+                    motors[i].setPower((v[i] / max));
+                }
+            } else {
+                for (int i = 0; i < 4; i++) {
+                    motors[i].setPower(v[i]);
+                }
             }
+        }
+        if(turn == 0) {
+            turnPIDActive = true;
         } else {
-            for (int i = 0; i < 4; i++) {
-                motors[i].setPower(v[i]);
-            }
+            turnPIDActive = false;
+            turnPID.reset();
         }
     }
 
     public void mecanumDrive(double forward, double strafe, double turn, double multiplier) {
-        double vd = Math.hypot(forward, strafe);
-        double theta = Math.atan2(forward, strafe) - (Math.PI / 4);
-        double[] v = {
-                vd * Math.sin(theta) + turn,
-                vd * Math.cos(theta) - turn,
-                vd * Math.cos(theta) + turn,
-                vd * Math.sin(theta) - turn
-        };
-        double max = Math.max(Math.max(Math.max(Math.max(Math.abs(v[0]), Math.abs(v[1])), Math.abs(v[2])), Math.abs(v[3])), 1);
-        if ((v[0] > 0 && v[1] > 0 && v[2] > 0 && v[3] > 0) || (v[0] < 0 && v[1] < 0 && v[2] < 0 && v[3] < 0)) {
-            if (multiplier < 0.6) {
-                multiplier = 0.6;
+        if(!drivePIDActive) {
+            double vd = Math.hypot(forward, strafe);
+            double theta = Math.atan2(forward, strafe) - (Math.PI / 4);
+            double[] v = {
+                    vd * Math.sin(theta) + turn,
+                    vd * Math.cos(theta) - turn,
+                    vd * Math.cos(theta) + turn,
+                    vd * Math.sin(theta) - turn
+            };
+            if ((v[0] > 0 && v[1] > 0 && v[2] > 0 && v[3] > 0) || (v[0] < 0 && v[1] < 0 && v[2] < 0 && v[3] < 0)) {
+                if (multiplier < 0.6) {
+                    multiplier = 0.6;
+                }
+            }
+            for (int i = 0; i < 4; i++) {
+                speeds[i] = (multiplier * v[i]);
             }
         }
-        for(int i = 0; i < 4; i++) {
-            motors[i].setPower(multiplier * v[i] / max);
+        if(turn != 0) {
+            turnPIDActive = false;
         }
     }
 
 
     public void driveTimed(double seconds, double forward, double turn) {
+        drivePIDActive = false;
         ElapsedTime time = new ElapsedTime();
         time.reset();
         setM(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -164,23 +211,15 @@ public class Drivetrain {
         stop();
     }
 
-    public void driveEnc(double inches) throws InterruptedException {
+    public void driveEnc(double inches) {
         setM(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setM(DcMotor.RunMode.RUN_USING_ENCODER);
-        drivePID.runToPosition(inches * ticksPerInch, 2);
+        driveTarget = (int)(inches * ticksPerInch);
+        drivePID.reset();
+        drivePIDActive = true;
     }
 
-    public void driveStraight(double inches) throws InterruptedException {
-        resetOrientationGyro();
-        driveEnc(inches);
-        /*while(drivePID.busy) {
-            if(Math.abs(gyro.getHeading()) > 1) {
-                turnGyro(-gyro.getHeading());
-            }
-        }*/
-    }
-
-    public void turnEnc(int degrees) {
+    /*public void turnEnc(int degrees) {
         double distance = botCirc * degrees / 360;
         setM(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setM(DcMotor.RunMode.RUN_TO_POSITION);
@@ -190,38 +229,30 @@ public class Drivetrain {
         }
         while (busy()) {}
         stop();
-    }
+    }*/
 
-    public void turnGyro(int degrees) {
+    /*public void turnGyro(int degrees) {
         resetOrientationGyro();
         setM(DcMotor.RunMode.RUN_USING_ENCODER);
-        //turnPID.runToPosition(degrees, 2);
-        stop();
-    }
+        turnTarget = degrees;
+        turnPID.reset();
+        turnPIDActive = true;
+    }*/
 
-    public void turnIMU(int degrees) throws InterruptedException {
-        PID control = new PID(0.4, 0.7, 0.7, 0, new PowerControl() {
-            public void setPower(double power) {
-                for (int motor = 0; motor < 4; motor++) {
-                    motors[motor].setPower(Range.clip(power / 180, -1.0, 1.0) * (motor % 2 == 0 ? -1 : 1));
-                }
-            }
-            public double getPosition() {
-                return imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle - zeroOrientation.firstAngle;
-            }
-        });
-        resetOrientationIMU();
+    public void turn(int degrees) {
+        resetOrientation();
         setM(DcMotor.RunMode.RUN_USING_ENCODER);
-        control.runToPosition(degrees, 5);
-        stop();
+        turnTarget = degrees;
+        turnPID.reset();
+        turnPIDActive = true;
     }
 
-    public void driveTo(double x, double y) throws InterruptedException {
+    /*public void driveTo(double x, double y) throws InterruptedException {
         double distance = Math.sqrt((x - pX) * (x - pX) + (y - pY) * (y - pY));
         double angle = Math.atan((y - pY) / (x - pX));
         turnGyro((int)angle);
         driveEnc(distance);
-    }
+    }*/
 
     public String speeds() {
         StringBuilder speeds = new StringBuilder();
@@ -239,8 +270,9 @@ public class Drivetrain {
 
     public void stop() {
         //driveEnc(0);
-        //turnGyro(0);
-        arcadeDrive(0,0);
+        //turnIMU(0);
+        running = false;
+        setM(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
     public void setZeroP(DcMotor.ZeroPowerBehavior behavior) {
@@ -255,16 +287,16 @@ public class Drivetrain {
         }
     }
 
-    private boolean busy() {
+    /*private boolean busy() {
         for (DcMotor motor: motors) {
             if (motor.getMode() == DcMotor.RunMode.RUN_TO_POSITION && motor.isBusy()) {
                 return true;
             }
         }
         return false;
-    }
+    }*/
 
     public void whileBusy() {
-        //while(drivePID.busy || turnPID.busy) {}
+        while(drivePIDActive || turnPIDActive) {}
     }
 }
