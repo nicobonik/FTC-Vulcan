@@ -25,20 +25,22 @@ public class NormieTeleop extends OpMode {
             hardwareMap.dcMotor.get("back_right"),
             hardwareMap.get(BNO055IMU.class, "imu")
         );
-        /*arm = new Arm(
-            new DcMotor[] {hardwareMap.dcMotor.get("arm1"),
-            hardwareMap.dcMotor.get("arm2")},
+        arm = new Arm(
+            new DcMotor[] {hardwareMap.dcMotor.get("arm_left"),
+            hardwareMap.dcMotor.get("arm_right")},
             hardwareMap.dcMotor.get("extender")
         );
         intake = new Intake(
             hardwareMap.dcMotor.get("intake"),
             hardwareMap.servo.get("door")
-        );*/
+        );
         gamepad1.setJoystickDeadzone(0.05f);
     }
 
     public void start() {
         drivetrain.init();
+        intake.init();
+        arm.init();
     }
 
     public void loop() {

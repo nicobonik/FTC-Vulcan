@@ -84,4 +84,8 @@ public class PID {
         }
         return false;
     }
+
+    public void stop() {
+        control.setPower(0);
+    }
 }

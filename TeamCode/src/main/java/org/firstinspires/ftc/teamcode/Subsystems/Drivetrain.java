@@ -104,7 +104,9 @@ public class Drivetrain {
                         motors[i].setPower(speeds[i] / max);
                     }
                 }
-                arcadeDrive(0,0);
+                for (int i = 0; i < 4; i++) {
+                    motors[i].setPower(0);
+                }
             }
         };
     }
