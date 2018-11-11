@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.util.Log;
 
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
 import static org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity.TAG;
 
@@ -12,9 +13,9 @@ public class PID {
     private double integral = 0;
     private double lastError = 0;
     private double lastTime = 0;
-    private double bias;
-    private double minPos, maxPos;
-    private boolean cyclic;
+    private double bias = 0;
+    private double minPos, maxPos, minPow = -1.0, maxPow = 1.0;
+    private boolean cyclic = false, limit = true;
     private ElapsedTime timer = new ElapsedTime();
     private PowerControl control;
     public boolean busy = false;
@@ -24,7 +25,6 @@ public class PID {
         Kd = kd;
         bias = b;
         control = ctrl;
-        cyclic = false;
     }
 
     public PID(double kp, double ki, double kd, double b, PowerControl ctrl, double min, double max) {
@@ -36,6 +36,12 @@ public class PID {
         minPos = min;
         maxPos = max;
         cyclic = true;
+    }
+
+    public void limitOutput(double min, double max) {
+        limit = true;
+        minPow = min;
+        maxPow = max;
     }
 
     public void reset() {
@@ -72,14 +78,22 @@ public class PID {
     public void runToPosition(double target, double margin) {
         reset();
         while (Math.abs(control.getPosition() - target) > margin) {
-            control.setPower(getResponse(control.getPosition(), target));
+            if(limit) {
+                control.setPower(Range.clip(getResponse(control.getPosition(), target), minPow, maxPow));
+            } else {
+                control.setPower(getResponse(control.getPosition(), target));
+            }
         }
         control.setPower(0);
     }
 
-    public boolean maintainOnce(double position, double margin) {
-        if (Math.abs(control.getPosition() - position) > margin) {
-            control.setPower(getResponse(control.getPosition(), position));
+    public boolean maintainOnce(double target, double margin) {
+        if (Math.abs(control.getPosition() - target) > margin) {
+            if(limit) {
+                control.setPower(Range.clip(getResponse(control.getPosition(), target), minPow, maxPow));
+            } else {
+                control.setPower(getResponse(control.getPosition(), target));
+            }
             return true;
         }
         return false;

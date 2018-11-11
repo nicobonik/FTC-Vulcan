@@ -28,7 +28,8 @@ public class NormieTeleop extends OpMode {
         arm = new Arm(
             new DcMotor[] {hardwareMap.dcMotor.get("arm_left"),
             hardwareMap.dcMotor.get("arm_right")},
-            hardwareMap.dcMotor.get("extender")
+            hardwareMap.dcMotor.get("extender"),
+            hardwareMap.analogInput.get("potent")
         );
         intake = new Intake(
             hardwareMap.dcMotor.get("intake"),
