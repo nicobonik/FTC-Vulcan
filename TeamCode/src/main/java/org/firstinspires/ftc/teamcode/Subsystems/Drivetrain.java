@@ -46,7 +46,7 @@ public class Drivetrain {
         motors[2].setDirection(DcMotor.Direction.FORWARD);
         motors[3].setDirection(DcMotor.Direction.REVERSE);
 
-        drivePID = new PID(1, 0, 0, 0, new PowerControl() {
+        drivePID = new PID(-0.4, -0.7, 0.7, 0, new PowerControl() {
             public void setPower(double power) {
                 for (int i = 0; i < 4; i++) {
                     speeds[i] += power;
@@ -58,11 +58,11 @@ public class Drivetrain {
                 for (int i = 0; i < 4; i++) {
                     sum += motors[i].getCurrentPosition() * (i % 2 == 0 ? 1 : -1);
                 }
-                return sum / 4;
+                return sum / 4 / ticksPerInch;
             }
         });
 
-        turnPID = new PID(0.4, 0.7, 0.7, 0, new PowerControl() {
+        turnPID = new PID(-0.025, -0.035, 0.035, 0, new PowerControl() {
             public void setPower(double power) {
                 for (int i = 0; i < 4; i++) {
                     speeds[i] += Range.clip(power / 180, -1.0, 1.0) * (i % 2 == 0 ? -1 : 1);
@@ -88,25 +88,25 @@ public class Drivetrain {
         systemThread = new Thread() {
             @Override
             public void run() {
-                while(running) {
-                    mecanumDrive(-ly, lx, rx, 0.8);
-                    if(drivePIDActive) {
-                        for(int i = 0; i < 4; i++) {
-                            speeds[i] = 0;
-                        }
-                        drivePIDActive = drivePID.maintainOnce(driveTarget, driveMargin);
+            while(running) {
+                mecanumDrive(-ly, lx, rx, 0.8);
+                if(drivePIDActive) {
+                    for(int i = 0; i < 4; i++) {
+                        speeds[i] = 0;
                     }
-                    if(turnPIDActive) {
-                        turnPIDActive = turnPID.maintainOnce(turnTarget, turnMargin);
-                    }
-                    double max = Math.max(Math.max(Math.max(Math.max(Math.abs(speeds[0]), Math.abs(speeds[1])), Math.abs(speeds[2])), Math.abs(speeds[3])), 1);
-                    for (int i = 0; i < 4; i++) {
-                        motors[i].setPower(speeds[i] / max);
-                    }
+                    drivePIDActive = drivePID.maintainOnce(driveTarget, driveMargin);
                 }
+                if(turnPIDActive) {
+                    turnPIDActive = turnPID.maintainOnce(turnTarget, turnMargin);
+                }
+                double max = Math.max(Math.max(Math.max(Math.max(Math.abs(speeds[0]), Math.abs(speeds[1])), Math.abs(speeds[2])), Math.abs(speeds[3])), 1);
                 for (int i = 0; i < 4; i++) {
-                    motors[i].setPower(0);
+                    motors[i].setPower(speeds[i] / max);
                 }
+            }
+            for (int i = 0; i < 4; i++) {
+                motors[i].setPower(0);
+            }
             }
         };
     }

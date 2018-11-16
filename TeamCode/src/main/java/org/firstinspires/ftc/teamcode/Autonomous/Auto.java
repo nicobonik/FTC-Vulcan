@@ -28,7 +28,7 @@ public class Auto extends LinearOpMode{
                 hardwareMap.dcMotor.get("back_right"),
                 hardwareMap.get(BNO055IMU.class, "imu")
         );
-        arm = new Arm(new DcMotor[] {hardwareMap.dcMotor.get("arm_left"), hardwareMap.dcMotor.get("arm_right")}, hardwareMap.dcMotor.get("extender"));
+        arm = new Arm(new DcMotor[] {hardwareMap.dcMotor.get("arm_left"), hardwareMap.dcMotor.get("arm_right")}, hardwareMap.dcMotor.get("extender"), hardwareMap.analogInput.get("potent"));
         intake = new Intake(hardwareMap.dcMotor.get("intake"), hardwareMap.servo.get("door"));
         houghVision = new MineralVisionHough();
         houghVision.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
@@ -55,6 +55,7 @@ public class Auto extends LinearOpMode{
         for(int i = 0; i < 10; i++) {
             goldPos[houghVision.getGoldPos()]++;
         }
+        houghVision.disable();
         int max = 0;
         int argmax = 3;
         for(int i = 0; i < 2; i++) {
@@ -64,7 +65,7 @@ public class Auto extends LinearOpMode{
             }
         }
         //drive through gold position
-        /*drivetrain.turn(45 * (argmax - 1));
+        drivetrain.turn(45 * (argmax - 1));
         drivetrain.whileBusy();
         drivetrain.driveEnc(6);
         drivetrain.whileBusy();
@@ -85,7 +86,7 @@ public class Auto extends LinearOpMode{
         drivetrain.turn(135);
         drivetrain.whileBusy();
         drivetrain.driveEnc(48);
-        drivetrain.whileBusy();*/
+        drivetrain.whileBusy();
         drivetrain.stop();
     }
 }

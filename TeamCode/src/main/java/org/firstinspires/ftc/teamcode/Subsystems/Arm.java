@@ -2,12 +2,14 @@ package org.firstinspires.ftc.teamcode.Subsystems;
 
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.Range;
 
 public class Arm {
     private final double ticksPerRevolution = 1440;
     private final double revsPerInch = 10; //placeholder
     private final double maximumExtension = 10000; //placeholder
+    private final double maxVoltage;
     private double swingPosition, extendPosition;
     private volatile boolean running;
     private DcMotor[] arm;
@@ -19,14 +21,17 @@ public class Arm {
         arm = armMotors;
         extender = extend;
         potentiometer = pot;
+        maxVoltage = potentiometer.getMaxVoltage();
 
-        arm[0].setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        arm[1].setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        arm[0].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        arm[1].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        arm[0].setDirection(DcMotor.Direction.FORWARD);
-        arm[1].setDirection(DcMotor.Direction.REVERSE);
+        arm[0].setDirection(DcMotor.Direction.REVERSE);
+        arm[1].setDirection(DcMotor.Direction.FORWARD);
 
         extender.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        extender.setDirection(DcMotor.Direction.REVERSE);
 
         extendPID = new PID(-1, 0, 0, 0, new PowerControl() {
             public void setPower(double power) {
@@ -43,7 +48,8 @@ public class Arm {
                 arm[1].setPower(power);
             }
             public double getPosition() {
-                return (potentiometer.getVoltage() / potentiometer.getMaxVoltage()) * 270;
+                return arm[0].getCurrentPosition() - arm[1].getCurrentPosition() / 2;
+                //return (potentiometer.getVoltage() / maxVoltage) * 270;
             }
         });
 
