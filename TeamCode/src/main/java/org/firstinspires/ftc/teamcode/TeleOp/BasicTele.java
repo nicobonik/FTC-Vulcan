@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.TeleOp;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -17,7 +18,8 @@ public class BasicTele extends OpMode {
                 hardwareMap.dcMotor.get("front_left"),
                 hardwareMap.dcMotor.get("front_right"),
                 hardwareMap.dcMotor.get("back_left"),
-                hardwareMap.dcMotor.get("back_right")
+                hardwareMap.dcMotor.get("back_right"),
+                hardwareMap.get(BNO055IMU.class, "imu")
         );
     }
 
