@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.Range;
 
-public class Arm {
+public class Arm extends Subsystem {
     private final double ticksPerRevolution = 1440;
     private final double revsPerInch = 10; //placeholder
     private final double maximumExtension = 10000; //placeholder
@@ -55,23 +55,11 @@ public class Arm {
 
         swingPosition = 0;
         extendPosition = 0;
-
-        systemThread = new Thread() {
-            @Override
-            public void run() {
-                while(running) {
-                    swingPID.maintainOnce(swingPosition, 2);
-                    extendPID.maintainOnce(extendPosition, 2);
-                }
-                swingPID.stop();
-                extendPID.stop();
-            }
-        };
     }
 
-    public void init() {
-        running = true;
-        systemThread.start();
+    public void updateSubsystem() {
+        swingPID.maintainOnce(swingPosition, 2);
+        extendPID.maintainOnce(extendPosition, 2);
     }
 
     public void swing(double speed) {
@@ -99,6 +87,8 @@ public class Arm {
     }
 
     public void stop() {
-        running = false;
+        arm[0].setPower(0);
+        arm[1].setPower(0);
+        extender.setPower(0);
     }
 }

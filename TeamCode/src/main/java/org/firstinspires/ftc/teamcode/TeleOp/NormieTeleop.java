@@ -21,9 +21,7 @@ public class NormieTeleop extends OpMode {
     }
 
     public void start() {
-        robot.drivetrain.init();
-        robot.intake.init();
-        robot.arm.init();
+        robot.init();
     }
 
     public void loop() {

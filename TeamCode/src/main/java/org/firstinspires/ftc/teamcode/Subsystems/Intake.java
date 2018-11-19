@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
-public class Intake {
+public class Intake extends Subsystem {
     private final double closePos = 1.0; //placeholders
     private final double openPos = 0.0;
     private volatile boolean running, open;
@@ -19,21 +19,11 @@ public class Intake {
         intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         power = 0;
         open = false;
-        systemThread = new Thread() {
-            @Override
-            public void run() {
-                while(running) {
-                    intake.setPower(power);
-                    door.setPosition(open ? 0.75 : 0.25);
-                }
-                intake.setPower(0);
-            }
-        };
     }
 
-    public void init() {
-        running = true;
-        systemThread.start();
+    public void updateSubsystem() {
+        intake.setPower(power);
+        door.setPosition(open ? 0.75 : 0.25);
     }
 
     public void intake(double power) {
@@ -41,7 +31,7 @@ public class Intake {
     }
 
     public void stop() {
-        running = false;
+        intake.setPower(0);
     }
 
     public void door(boolean open) {

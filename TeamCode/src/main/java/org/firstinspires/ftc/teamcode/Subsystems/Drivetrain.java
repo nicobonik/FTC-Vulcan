@@ -11,7 +11,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
-public class Drivetrain {
+public class Drivetrain extends Subsystem {
     private static final double wheelCirc = Math.PI * 4;
     //private static final double botDiam = 17; // placeholder
     private static final double ticksPerInch = 537.6 / wheelCirc;
@@ -84,36 +84,23 @@ public class Drivetrain {
         ly = 0;
         lx = 0;
         rx = 0;
-
-        systemThread = new Thread() {
-            @Override
-            public void run() {
-            while(running) {
-                mecanumDrive(-ly, lx, rx, 0.8);
-                if(drivePIDActive) {
-                    for(int i = 0; i < 4; i++) {
-                        speeds[i] = 0;
-                    }
-                    drivePIDActive = drivePID.maintainOnce(driveTarget, driveMargin);
-                }
-                if(turnPIDActive) {
-                    turnPIDActive = turnPID.maintainOnce(turnTarget, turnMargin);
-                }
-                double max = Math.max(Math.max(Math.max(Math.max(Math.abs(speeds[0]), Math.abs(speeds[1])), Math.abs(speeds[2])), Math.abs(speeds[3])), 1);
-                for (int i = 0; i < 4; i++) {
-                    motors[i].setPower(speeds[i] / max);
-                }
-            }
-            for (int i = 0; i < 4; i++) {
-                motors[i].setPower(0);
-            }
-            }
-        };
     }
 
-    public void init() {
-        running = true;
-        systemThread.start();
+    public void updateSubsystem() {
+        mecanumDrive(-ly, lx, rx, 0.8);
+        if(drivePIDActive) {
+            for(int i = 0; i < 4; i++) {
+                speeds[i] = 0;
+            }
+            drivePIDActive = drivePID.maintainOnce(driveTarget, driveMargin);
+        }
+        if(turnPIDActive) {
+            turnPIDActive = turnPID.maintainOnce(turnTarget, turnMargin);
+        }
+        double max = Math.max(Math.max(Math.max(Math.max(Math.abs(speeds[0]), Math.abs(speeds[1])), Math.abs(speeds[2])), Math.abs(speeds[3])), 1);
+        for (int i = 0; i < 4; i++) {
+            motors[i].setPower(speeds[i] / max);
+        }
     }
 
     public void setGamepadState(double ly, double lx, double rx) {
@@ -180,7 +167,7 @@ public class Drivetrain {
 
     public void mecanumDrive(double forward, double strafe, double turn, double multiplier) {
         if(!drivePIDActive) {
-            double vd = Math.hypot(forward, strafe);
+            double vd = Math.hypot((forward / 0.7) * (0.3 * Math.pow(forward, 6) + 0.4), (strafe / 0.7) * (0.3 * Math.pow(strafe, 6) + 0.4));
             double theta = Math.atan2(forward, strafe) - (Math.PI / 4);
             double[] v = {
                     vd * Math.sin(theta) + turn,
@@ -194,14 +181,13 @@ public class Drivetrain {
                 }
             }
             for (int i = 0; i < 4; i++) {
-                speeds[i] = (multiplier * v[i]);
+                speeds[i] = (tempPower * multiplier * v[i]);
             }
         }
         if(turn != 0) {
             turnPIDActive = false;
         }
     }
-
 
     public void driveTimed(double seconds, double forward, double turn) {
         drivePIDActive = false;
