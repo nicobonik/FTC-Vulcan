@@ -8,15 +8,14 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class Intake extends Subsystem {
     private final double closePos = 1.0; //placeholders
     private final double openPos = 0.0;
-    private volatile boolean running, open;
-    private volatile double power;
-    private DcMotor intake;
+    private boolean open;
+    private double power;
+    private CRServo intake;
     private Servo door;
     private Thread systemThread;
-    public Intake(DcMotor in, Servo dr) {
+    public Intake(CRServo in, Servo dr) {
         this.intake = in;
         this.door = dr;
-        intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         power = 0;
         open = false;
     }

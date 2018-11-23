@@ -9,19 +9,17 @@ public class Arm extends Subsystem {
     private final double ticksPerRevolution = 1440;
     private final double revsPerInch = 10; //placeholder
     private final double maximumExtension = 10000; //placeholder
-    private final double maxVoltage;
+    //private final double maxVoltage;
     private double swingPosition, extendPosition;
-    private volatile boolean running;
     private DcMotor[] arm;
     private DcMotor extender;
-    private AnalogInput potentiometer;
+    //private AnalogInput potentiometer;
     private PID extendPID, swingPID;
-    private Thread systemThread;
-    public Arm(DcMotor[] armMotors, DcMotor extend, AnalogInput pot) {
+    public Arm(DcMotor[] armMotors, DcMotor extend) {//, AnalogInput pot) {
         arm = armMotors;
         extender = extend;
-        potentiometer = pot;
-        maxVoltage = potentiometer.getMaxVoltage();
+        //potentiometer = pot;
+        //maxVoltage = potentiometer.getMaxVoltage();
 
         arm[0].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         arm[1].setMode(DcMotor.RunMode.RUN_USING_ENCODER);

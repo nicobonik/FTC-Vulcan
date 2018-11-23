@@ -13,7 +13,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 public class Drivetrain extends Subsystem {
     private static final double wheelCirc = Math.PI * 4;
-    //private static final double botDiam = 17; // placeholder
     private static final double ticksPerInch = 537.6 / wheelCirc;
     private static final double turnMult = 0.8;
     private double[] speeds = new double[4];
@@ -36,10 +35,8 @@ public class Drivetrain extends Subsystem {
         motors[2] = backLeft;
         motors[3] = backRight;
 
-        setM(DcMotor.RunMode.RUN_USING_ENCODER);
-        for (int motor = 0; motor < 4; motor++) {
-            motors[motor].setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        }
+        setM(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        setZeroP(DcMotor.ZeroPowerBehavior.FLOAT);
 
         motors[0].setDirection(DcMotor.Direction.FORWARD);
         motors[1].setDirection(DcMotor.Direction.REVERSE);
@@ -75,6 +72,7 @@ public class Drivetrain extends Subsystem {
 
         setupIMU(IMU);
 
+        tempPower = BASE_POWER;
         drivePIDActive = false;
         turnPIDActive = false;
         driveTarget = 0;
@@ -88,7 +86,7 @@ public class Drivetrain extends Subsystem {
 
     public void updateSubsystem() {
         mecanumDrive(-ly, lx, rx, 0.8);
-        if(drivePIDActive) {
+        /*if(drivePIDActive) {
             for(int i = 0; i < 4; i++) {
                 speeds[i] = 0;
             }
@@ -96,7 +94,7 @@ public class Drivetrain extends Subsystem {
         }
         if(turnPIDActive) {
             turnPIDActive = turnPID.maintainOnce(turnTarget, turnMargin);
-        }
+        }*/
         double max = Math.max(Math.max(Math.max(Math.max(Math.abs(speeds[0]), Math.abs(speeds[1])), Math.abs(speeds[2])), Math.abs(speeds[3])), 1);
         for (int i = 0; i < 4; i++) {
             motors[i].setPower(speeds[i] / max);
@@ -181,8 +179,9 @@ public class Drivetrain extends Subsystem {
                 }
             }
             for (int i = 0; i < 4; i++) {
-                speeds[i] = (tempPower * multiplier * v[i]);
+                //speeds[i] = (tempPower * multiplier * v[i]);
             }
+            speeds = v;
         }
         if(turn != 0) {
             turnPIDActive = false;
