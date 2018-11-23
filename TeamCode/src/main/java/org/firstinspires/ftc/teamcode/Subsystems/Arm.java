@@ -10,7 +10,7 @@ public class Arm extends Subsystem {
     private final double revsPerInch = 10; //placeholder
     private final double maximumExtension = 10000; //placeholder
     //private final double maxVoltage;
-    private double swingPosition, extendPosition;
+    private volatile double swingPosition, extendPosition;
     private DcMotor[] arm;
     private DcMotor extender;
     //private AnalogInput potentiometer;

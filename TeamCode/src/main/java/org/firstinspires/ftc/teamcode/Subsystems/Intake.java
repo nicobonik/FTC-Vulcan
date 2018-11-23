@@ -8,8 +8,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class Intake extends Subsystem {
     private final double closePos = 1.0; //placeholders
     private final double openPos = 0.0;
-    private boolean open;
-    private double power;
+    private volatile boolean open;
+    private volatile double power;
     private CRServo intake;
     private Servo door;
     private Thread systemThread;

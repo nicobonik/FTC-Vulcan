@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -18,7 +17,7 @@ public class Drivetrain extends Subsystem {
     private double[] speeds = new double[4];
     private double ly, lx, rx;
     private int driveTarget, driveMargin, turnTarget, turnMargin;
-    private volatile boolean drivePIDActive, turnPIDActive, running;
+    private volatile boolean drivePIDActive, turnPIDActive;
     public static final double BASE_POWER = 0.9;
     public double tempPower = BASE_POWER;
     private DcMotor[] motors = new DcMotor[4];
@@ -258,8 +257,8 @@ public class Drivetrain extends Subsystem {
     public void stop() {
         //driveEnc(0);
         //turnIMU(0);
-        running = false;
         setM(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        speeds(new double[] {0, 0, 0, 0});
     }
 
     public void setZeroP(DcMotor.ZeroPowerBehavior behavior) {
