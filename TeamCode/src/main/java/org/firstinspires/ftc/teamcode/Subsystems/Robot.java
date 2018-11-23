@@ -96,7 +96,7 @@ public class Robot {
         //telemetry.addData("intake", "initialized");
         //telemetry.addData("runnable", "initializing");
         //telemetry.update();
-        /*subsystemUpdater = new Runnable() {
+        subsystemUpdater = new Runnable() {
             public void run() {
                 try {
                     while (!Thread.currentThread().isInterrupted()) {
@@ -124,7 +124,7 @@ public class Robot {
                     stop();
                 }
             }
-        };*/
+        };
         //telemetry.addData("runnable", "initialized");
         //telemetry.update();
         subsystems = new Subsystem[] {drivetrain, intake, arm};
