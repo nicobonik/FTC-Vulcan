@@ -86,7 +86,7 @@ public class Drivetrain extends Subsystem {
 
     public void updateSubsystem() {
         mecanumDrive(-ly, lx, rx, 0.8);
-        /*if(drivePIDActive) {
+        if(drivePIDActive) {
             for(int i = 0; i < 4; i++) {
                 speeds[i] = 0;
             }
@@ -94,7 +94,15 @@ public class Drivetrain extends Subsystem {
         }
         if(turnPIDActive) {
             turnPIDActive = turnPID.maintainOnce(turnTarget, turnMargin);
-        }*/
+        }
+        //experimental
+        double angle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).secondAngle;
+        if(Math.abs(angle) > 5) {
+            for (int i = 0; i < 4; i++) {
+                speeds[i] = -Math.signum(angle) * 0.5;
+            }
+        }
+        //
         double max = Math.max(Math.max(Math.max(Math.max(Math.abs(speeds[0]), Math.abs(speeds[1])), Math.abs(speeds[2])), Math.abs(speeds[3])), 1);
         for (int i = 0; i < 4; i++) {
             motors[i].setPower(speeds[i] / max);
