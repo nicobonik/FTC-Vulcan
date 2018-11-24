@@ -8,21 +8,21 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class Intake extends Subsystem {
     private final double closePos = 1.0; //placeholders
     private final double openPos = 0.0;
-    private volatile boolean open;
+    public volatile int position;
     private volatile double power;
     private CRServo intake;
     private Servo door;
     private Thread systemThread;
     public Intake(CRServo in, Servo dr) {
-        this.intake = in;
-        this.door = dr;
+        intake = in;
+        door = dr;
         power = 0;
-        open = false;
+        position = 0;
     }
 
     public void updateSubsystem() {
         intake.setPower(power);
-        door.setPosition(open ? 0.75 : 0.25);
+        door.setPosition((position * 0.4) + 0.1);
     }
 
     public void intake(double power) {
@@ -31,10 +31,14 @@ public class Intake extends Subsystem {
 
     public void stop() {
         intake.setPower(0);
+        door.setPosition(0.75);
     }
 
-    public void door(boolean open) {
-        this.open = open;
+    public void door(boolean closed) {
+        if(closed) {
+            position = 0;
+        } else {
+            position = Math.min(++position, 2);
+        }
     }
-
 }

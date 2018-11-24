@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.Subsystems;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -39,8 +40,8 @@ public class Drivetrain extends Subsystem {
 
         motors[0].setDirection(DcMotor.Direction.FORWARD);
         motors[1].setDirection(DcMotor.Direction.REVERSE);
-        motors[2].setDirection(DcMotor.Direction.FORWARD);
-        motors[3].setDirection(DcMotor.Direction.REVERSE);
+        motors[2].setDirection(DcMotor.Direction.REVERSE);
+        motors[3].setDirection(DcMotor.Direction.FORWARD);
 
         drivePID = new PID(-0.4, -0.7, 0.7, 0, new PowerControl() {
             public void setPower(double power) {

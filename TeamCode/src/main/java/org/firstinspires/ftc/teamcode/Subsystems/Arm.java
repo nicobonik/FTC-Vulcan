@@ -6,12 +6,13 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.Range;
 
 public class Arm extends Subsystem {
-    private final double ticksPerRevolution = 1440;
+    private final double ticksPerRevolution = 5264;
     private final double revsPerInch = 10; //placeholder
     private final double maximumExtension = 10000; //placeholder
     //private final double maxVoltage;
-    private volatile double swingPosition, extendPosition;
-    private DcMotor[] arm;
+    private volatile double swingPosition, extendPosition, swingPower, extendPower;
+    private volatile boolean swingPIDActive, extendPIDActive;
+    public DcMotor[] arm;
     private DcMotor extender;
     //private AnalogInput potentiometer;
     private PID extendPID, swingPID;
@@ -21,11 +22,17 @@ public class Arm extends Subsystem {
         //potentiometer = pot;
         //maxVoltage = potentiometer.getMaxVoltage();
 
+        arm[0].setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        arm[1].setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         arm[0].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         arm[1].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         arm[0].setDirection(DcMotor.Direction.REVERSE);
         arm[1].setDirection(DcMotor.Direction.FORWARD);
+
+        arm[0].setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        arm[1].setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         extender.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
@@ -56,27 +63,47 @@ public class Arm extends Subsystem {
     }
 
     public void updateSubsystem() {
-        swingPID.maintainOnce(swingPosition, 2);
-        extendPID.maintainOnce(extendPosition, 2);
+        if(swingPIDActive) {
+            swingPID.maintainOnce(swingPosition, 2);
+        } else {
+            if((Math.abs(arm[0].getCurrentPosition()) > ticksPerRevolution / 4 && swingPower > 0) || (Math.abs(arm[0].getCurrentPosition()) < 0 && swingPower < 0)) {
+                arm[0].setPower(0);
+                arm[1].setPower(0);
+            } else {
+                arm[0].setPower(swingPower);
+                arm[1].setPower(swingPower);
+            }
+        }
+        if(extendPIDActive) {
+            extendPID.maintainOnce(extendPosition, 2);
+        } else {
+            extender.setPower(extendPower);
+        }
+
     }
 
     public void swing(double speed) {
-        swingPosition = Range.clip(speed * 15, 0, 90);
+        swingPIDActive = false;
+        swingPower = speed;
     }
 
     public void swing(boolean up) {
-        swingPosition = up ? 90 : 0;
+        swingPIDActive = true;
+        swingPosition = up ? ticksPerRevolution / 4 : 0;
     }
 
     public void extend(double speed) {
-        extendPosition = Range.clip(extendPosition + speed * 15, 0, maximumExtension);
+        extendPIDActive = false;
+        extendPower = speed;
     }
 
     public void extend(boolean out) {
+        extendPIDActive = true;
         extendPosition = out ? maximumExtension : 0;
     }
 
     public void extendDist(double inches) {
+        extendPIDActive = true;
         extendPosition = extender.getCurrentPosition() + inches * revsPerInch * ticksPerRevolution;
     }
 

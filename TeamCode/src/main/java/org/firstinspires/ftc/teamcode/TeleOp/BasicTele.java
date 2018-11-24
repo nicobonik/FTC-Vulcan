@@ -26,10 +26,10 @@ public class BasicTele extends OpMode {
         double vd = Math.hypot((-gamepad1.left_stick_y / 0.7) * (0.3 * Math.pow(-gamepad1.left_stick_y, 6) + 0.4), (gamepad1.left_stick_x / 0.7) * (0.3 * Math.pow(gamepad1.left_stick_x, 6) + 0.4));
         double theta = Math.atan2(-gamepad1.left_stick_y, gamepad1.left_stick_x) - (Math.PI / 4);
         double[] v = {
-                vd * Math.sin(theta) + gamepad1.right_stick_x,
-                vd * Math.cos(theta) - gamepad1.right_stick_x,
-                vd * Math.cos(theta) + gamepad1.right_stick_x,
-                vd * Math.sin(theta) - gamepad1.right_stick_x
+            vd * Math.sin(theta) + gamepad1.right_stick_x,
+            vd * Math.cos(theta) - gamepad1.right_stick_x,
+            vd * Math.cos(theta) + gamepad1.right_stick_x,
+            vd * Math.sin(theta) - gamepad1.right_stick_x
         };
         fl.setPower(v[0]);
         fr.setPower(v[1]);

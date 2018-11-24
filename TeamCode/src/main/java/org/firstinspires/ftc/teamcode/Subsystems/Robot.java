@@ -18,6 +18,7 @@ public class Robot {
     public Runnable subsystemUpdater;
     public HardwareMap hardwareMap;
     public Telemetry telemetry;
+    private Thread subsystemUpdateThread;
 
     public Robot(HardwareMap hwMap) {
         hardwareMap = hwMap;
@@ -96,26 +97,17 @@ public class Robot {
         //telemetry.addData("intake", "initialized");
         //telemetry.addData("runnable", "initializing");
         //telemetry.update();
+        subsystems = new Subsystem[] {drivetrain, intake, arm};
         subsystemUpdater = new Runnable() {
             public void run() {
                 try {
                     while (!Thread.currentThread().isInterrupted()) {
-                        telemetry.addData("all subsystems", "updating");
-                        telemetry.update();
                         for (Subsystem subsystem : subsystems) {
-                            telemetry.addData("subsystem", "updating");
-                            telemetry.update();
                             if (subsystem != null) {
                                 subsystem.updateSubsystem();
                             }
-                            telemetry.addData("subsystem", "updated");
-                            telemetry.update();
                         }
-                        telemetry.addData("all subsystems", "updated");
-                        telemetry.update();
                         Thread.sleep(1);
-                        telemetry.addData("thread", "slept");
-                        telemetry.update();
                     }
                 } catch (InterruptedException e) {
                     telemetry.addData("interrupted", true);
@@ -127,14 +119,15 @@ public class Robot {
         };
         //telemetry.addData("runnable", "initialized");
         //telemetry.update();
-        subsystems = new Subsystem[] {drivetrain, intake, arm};
     }
 
     public void init() {
-        new Thread(subsystemUpdater).start();
+        subsystemUpdateThread = new Thread(subsystemUpdater);
+        subsystemUpdateThread.start();
     }
 
     public void stop() {
+        subsystemUpdateThread.interrupt();
         drivetrain.stop();
         arm.stop();
         intake.stop();
