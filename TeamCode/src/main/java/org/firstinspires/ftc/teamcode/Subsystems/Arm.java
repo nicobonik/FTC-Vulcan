@@ -84,7 +84,8 @@ public class Arm extends Subsystem {
 
     public void swing(double speed) {
         swingPIDActive = false;
-        swingPower = speed;
+        double power = (speed / 0.7) * (0.3 * Math.pow(speed, 6) + 0.4);
+        swingPower += (power - swingPower) / 10;
     }
 
     public void swing(boolean up) {

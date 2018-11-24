@@ -62,7 +62,7 @@ public class Drivetrain extends Subsystem {
         turnPID = new PID(-0.025, -0.035, 0.035, 0, new PowerControl() {
             public void setPower(double power) {
                 for (int i = 0; i < 4; i++) {
-                    speeds[i] += Range.clip(power / 180, -1.0, 1.0) * (i % 2 == 0 ? -1 : 1);
+                    speeds[i] += Range.clip(power, -1.0, 1.0) * (i % 2 == 0 ? -1 : 1);
                 }
             }
             public double getPosition() {
@@ -97,7 +97,7 @@ public class Drivetrain extends Subsystem {
         }
         //experimental
         double angle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).secondAngle;
-        if(Math.abs(angle) > 5) {
+        if(Math.abs(angle) > 10) {
             for (int i = 0; i < 4; i++) {
                 speeds[i] = -Math.signum(angle) * 0.5;
             }
@@ -152,14 +152,14 @@ public class Drivetrain extends Subsystem {
                     forward2 - turn2, //fr
                     forward2 + turn2, //bl
                     forward2 - turn2};  //br
-            double max = Math.max(Math.abs(v[3]), Math.max(Math.abs(v[2]), Math.max(Math.abs(v[1]), Math.abs(v[0]))));
+            double max = Math.max(Math.max(Math.abs(v[3]), Math.max(Math.abs(v[2]), Math.max(Math.abs(v[1]), Math.abs(v[0])))), 1);
             if (max > tempPower) {
                 for (int i = 0; i < 4; i++) {
-                    motors[i].setPower((v[i] / max));
+                    speeds[i] = v[i] / max;
                 }
             } else {
                 for (int i = 0; i < 4; i++) {
-                    motors[i].setPower(v[i]);
+                    speeds[i] = (tempPower * v[i]);
                 }
             }
         }
@@ -187,9 +187,8 @@ public class Drivetrain extends Subsystem {
                 }
             }
             for (int i = 0; i < 4; i++) {
-                //speeds[i] = (tempPower * multiplier * v[i]);
+                speeds[i] = (tempPower * multiplier * v[i]);
             }
-            speeds = v;
         }
         if(turn != 0) {
             turnPIDActive = false;
