@@ -53,7 +53,7 @@ public class Arm extends Subsystem {
                 arm[1].setPower(power);
             }
             public double getPosition() {
-                return arm[0].getCurrentPosition() - arm[1].getCurrentPosition() / 2;
+                return arm[1].getCurrentPosition() - arm[0].getCurrentPosition() / 2;
                 //return (potentiometer.getVoltage() / maxVoltage) * 270;
             }
         });
@@ -66,12 +66,13 @@ public class Arm extends Subsystem {
         if(swingPIDActive) {
             swingPID.maintainOnce(swingPosition, 2);
         } else {
-            if((Math.abs(arm[0].getCurrentPosition()) > ticksPerRevolution / 4 && swingPower > 0) || (Math.abs(arm[0].getCurrentPosition()) < 0 && swingPower < 0)) {
+            if((Math.abs(arm[1].getCurrentPosition()) > ticksPerRevolution / 4 && swingPower > 0) || (Math.abs(arm[1].getCurrentPosition()) < 0 && swingPower < 0)) {
                 arm[0].setPower(0);
                 arm[1].setPower(0);
             } else {
-                arm[0].setPower(swingPower);
-                arm[1].setPower(swingPower);
+                double pow = Math.max(Math.min(Math.min(swingPower, ((ticksPerRevolution / 4) - arm[1].getCurrentPosition()) / 250), arm[1].getCurrentPosition() / 250), 0.1);
+                arm[0].setPower(pow);
+                arm[1].setPower(pow);
             }
         }
         if(extendPIDActive) {
@@ -79,13 +80,12 @@ public class Arm extends Subsystem {
         } else {
             extender.setPower(extendPower);
         }
-
     }
 
     public void swing(double speed) {
         swingPIDActive = false;
         double power = (speed / 0.7) * (0.3 * Math.pow(speed, 6) + 0.4);
-        swingPower += (power - swingPower) / 10;
+        swingPower += (power - swingPower) / 2;
     }
 
     public void swing(boolean up) {

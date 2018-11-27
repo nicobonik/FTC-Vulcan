@@ -14,7 +14,7 @@ import org.firstinspires.ftc.teamcode.Subsystems.MineralVisionHough;
 import org.firstinspires.ftc.teamcode.Subsystems.Robot;
 
 @Autonomous(name = "TestAutonomous", group="Auto")
-public class Auto extends LinearOpMode{
+public class AutoSilver extends LinearOpMode{
     private Robot robot;
     private ElapsedTime Runtime = new ElapsedTime();
     private MineralVisionHough houghVision;
@@ -31,16 +31,20 @@ public class Auto extends LinearOpMode{
         robot.arm.swing(true);
         robot.arm.whileBusy();
         //extend slides
-        robot.arm.extendDist(10);
+        double startTime = getRuntime();
+        robot.arm.extend(1.0);
+        while(getRuntime() < startTime + 0.5) {}
+        robot.arm.extend(0);
         robot.arm.whileBusy();
         //drive forward
         robot.drivetrain.resetOrientation(); //reset IMU because robot has landed
         robot.drivetrain.driveEnc(4);
         robot.drivetrain.whileBusy();
         //retract slides
-        robot.arm.extend(false);
-        //fold slides
-        robot.arm.swing(false);
+        startTime = getRuntime();
+        robot.arm.extend(-1.0);
+        while(getRuntime() < startTime + 0.5) {}
+        robot.arm.extend(0);
         //take video of sampling field, find most commonly detected gold position
         houghVision.enable();
         for(int i = 0; i < 10; i++) {
@@ -55,6 +59,8 @@ public class Auto extends LinearOpMode{
                 argmax = i;
             }
         }
+        //fold slides
+        robot.arm.swing(false);
         //drive through gold position
         robot.drivetrain.turn(45 * (argmax - 1));
         robot.drivetrain.whileBusy();
@@ -65,16 +71,20 @@ public class Auto extends LinearOpMode{
         robot.drivetrain.whileBusy();
         robot.drivetrain.driveEnc(6);
         robot.drivetrain.whileBusy();
-        robot.drivetrain.turn(45 * (argmax - 1));
+        robot.drivetrain.turn(45 * (argmax - 1) + 90);
         robot.drivetrain.whileBusy();
-        robot.drivetrain.driveEnc(24);
+        robot.drivetrain.driveEnc(12);
+        robot.drivetrain.whileBusy();
+        robot.drivetrain.turn(45);
+        robot.drivetrain.whileBusy();
+        robot.drivetrain.driveEnc(36);
         robot.drivetrain.whileBusy();
         //drop team marker
         robot.intake.intake(-1);
         sleep(500);
         robot.intake.stop();
         //park
-        robot.drivetrain.turn(135);
+        robot.drivetrain.turn(180);
         robot.drivetrain.whileBusy();
         robot.drivetrain.driveEnc(48);
         robot.drivetrain.whileBusy();
