@@ -101,13 +101,13 @@ public class Robot {
         subsystemUpdater = new Runnable() {
             public void run() {
                 try {
+                    Thread.sleep(200);
                     while (!Thread.currentThread().isInterrupted()) {
                         for (Subsystem subsystem : subsystems) {
                             if (subsystem != null) {
                                 subsystem.updateSubsystem();
                             }
                         }
-                        Thread.sleep(1);
                     }
                 } catch (InterruptedException e) {
                     telemetry.addData("interrupted", true);

@@ -99,6 +99,12 @@ public class PID {
         return false;
     }
 
+    public void setCoefficients(double kp, double ki, double kd) {
+        Kp = kp;
+        Ki = ki;
+        Kd = kd;
+    }
+
     public void stop() {
         control.setPower(0);
     }

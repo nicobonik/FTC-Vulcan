@@ -25,19 +25,24 @@ public class AutoGold extends LinearOpMode{
         houghVision.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
         houghVision.setShowCountours(false);
         houghVision.setTelem(telemetry);
+        //start on ground, init IMU, then pull up before match starts
+        robot.drivetrain.setupIMU(); //wait to start IMU until robot has landed
+        double startTime = getRuntime();
+        robot.arm.extendDist(-6); // placeholder
+        robot.arm.swing(false);
+        robot.arm.whileBusy();
         waitForStart();
         Runtime.reset();
         //unfold bot
         robot.arm.swing(true);
         robot.arm.whileBusy();
         //extend slides
-        double startTime = getRuntime();
+        startTime = getRuntime();
         robot.arm.extend(1.0);
         while(getRuntime() < startTime + 0.5) {}
         robot.arm.extend(0);
         robot.arm.whileBusy();
         //drive forward
-        robot.drivetrain.resetOrientation(); //reset IMU because robot has landed
         robot.drivetrain.driveEnc(4);
         robot.drivetrain.whileBusy();
         //retract slides

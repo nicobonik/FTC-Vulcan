@@ -34,6 +34,7 @@ public class Drivetrain extends Subsystem {
         motors[1] = frontRight;
         motors[2] = backLeft;
         motors[3] = backRight;
+        imu = IMU;
 
         setM(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         setZeroP(DcMotor.ZeroPowerBehavior.FLOAT);
@@ -69,8 +70,6 @@ public class Drivetrain extends Subsystem {
                 return imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
             }
         }, -180, 180);
-
-        setupIMU(IMU);
 
         tempPower = BASE_POWER;
         drivePIDActive = false;
@@ -121,14 +120,12 @@ public class Drivetrain extends Subsystem {
         while(gyro.isCalibrating()) {}
     }*/
 
-    public void setupIMU(BNO055IMU adaIMU) {
+    public void setupIMU() {
         parameters = new BNO055IMU.Parameters();
         parameters.mode = BNO055IMU.SensorMode.IMU;
         parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
         parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
         parameters.loggingEnabled = false;
-
-        imu = adaIMU;
 
         imu.initialize(parameters);
         while (!imu.isGyroCalibrated()) {}
