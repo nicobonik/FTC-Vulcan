@@ -13,8 +13,8 @@ import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.MineralVisionHough;
 import org.firstinspires.ftc.teamcode.Subsystems.Robot;
 
-@Autonomous(name = "TestAutonomous", group="Auto")
-public class AutoGold extends LinearOpMode{
+@Autonomous(name = "TestAutonomousGold", group="Auto")
+public class AutoGold extends LinearOpMode {
     private Robot robot;
     private ElapsedTime Runtime = new ElapsedTime();
     private MineralVisionHough houghVision;

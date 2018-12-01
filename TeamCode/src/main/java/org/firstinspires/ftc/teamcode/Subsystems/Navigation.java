@@ -14,8 +14,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
-import org.firstinspires.ftc.robotcore.internal.vuforia.VuforiaLocalizerImpl;
 import org.opencv.core.Core;
+import org.opencv.core.CvException;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
@@ -40,9 +40,7 @@ public class Navigation {
     private double x, y, hdg;
 
     //OpenCV
-    private int imageWidth, imageHeight;
-    private boolean showContours = false;
-    private Mat main;
+    private MineralVisionHough mineralVision;
     private Mat frame;
     private byte[] frameBuffer;
     private int goldPosition;
@@ -52,13 +50,13 @@ public class Navigation {
 
     // Since ImageTarget trackables use mm to specifiy their dimensions, we must use mm for all the physical dimension.
     // We will define some constants and conversions here
-    private static final float mmPerInch        = 25.4f;
-    private static final float mmFTCFieldWidth  = (12*6) * mmPerInch;       // the width of the FTC field (from the center point to the outer panels)
-    private static final float mmTargetHeight   = (6) * mmPerInch;          // the height of the center of the target image above the floor
+    private static final float mmPerInch = 25.4f;
+    private static final float mmFTCFieldWidth = (12 * 6) * mmPerInch;       // the width of the FTC field (from the center point to the outer panels)
+    private static final float mmTargetHeight = (6) * mmPerInch;          // the height of the center of the target image above the floor
 
-    final int CAMERA_FORWARD_DISPLACEMENT  = 110;   // eg: Camera is 110 mm in front of robot center
+    final int CAMERA_FORWARD_DISPLACEMENT = 110;   // eg: Camera is 110 mm in front of robot center
     final int CAMERA_VERTICAL_DISPLACEMENT = 200;   // eg: Camera is 200 mm above ground
-    final int CAMERA_LEFT_DISPLACEMENT     = 0;     // eg: Camera is ON the robot's center line
+    final int CAMERA_LEFT_DISPLACEMENT = 0;     // eg: Camera is ON the robot's center line
 
     // Select which camera you want use.  The FRONT camera is the one on the same side as the screen.
     // Valid choices are:  BACK or FRONT
@@ -70,7 +68,7 @@ public class Navigation {
     private boolean cvActive = false;
 
     private VuforiaLocalizer vuforia;
-    private java.util.concurrent.BlockingQueue<VuforiaLocalizer.CloseableFrame>	frameQueue;
+    private java.util.concurrent.BlockingQueue<VuforiaLocalizer.CloseableFrame> frameQueue;
 
     private VuforiaTrackables targetsRoverRuckus;
     private VuforiaTrackable blueRover, redFootprint, frontCraters, backSpace;
@@ -81,15 +79,17 @@ public class Navigation {
     private OpenGLMatrix phoneLocationOnRobot;
 
     private Runnable visionProcess;
+    private Thread visionThread;
 
     private Telemetry telemetry;
+
     /**
      * If you are standing in the Red Alliance Station looking towards the center of the field,
-     *     - The X axis runs from your left to the right. (positive from the center to the right)
-     *     - The Y axis runs from the Red Alliance Station towards the other side of the field
-     *       where the Blue Alliance Station is. (Positive is from the center, towards the BlueAlliance station)
-     *     - The Z axis runs from the floor, upwards towards the ceiling.  (Positive is above the floor)
-     *
+     * - The X axis runs from your left to the right. (positive from the center to the right)
+     * - The Y axis runs from the Red Alliance Station towards the other side of the field
+     * where the Blue Alliance Station is. (Positive is from the center, towards the BlueAlliance station)
+     * - The Z axis runs from the floor, upwards towards the ceiling.  (Positive is above the floor)
+     * <p>
      * Robot:
      * FORWARD = +X
      * LEFT = +Y
@@ -101,7 +101,7 @@ public class Navigation {
         parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
 
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
-        parameters.cameraDirection   = CAMERA_CHOICE;
+        parameters.cameraDirection = CAMERA_CHOICE;
 
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
         targetsRoverRuckus = this.vuforia.loadTrackablesFromAsset("RoverRuckus");
@@ -129,7 +129,7 @@ public class Navigation {
 
         frontCratersLocationOnField = OpenGLMatrix
                 .translation(-mmFTCFieldWidth, 0, mmTargetHeight)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0 , 90));
+                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 90));
         frontCraters.setLocation(frontCratersLocationOnField);
 
         backSpaceLocationOnField = OpenGLMatrix
@@ -142,9 +142,8 @@ public class Navigation {
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, YZX, DEGREES,
                         CAMERA_CHOICE == FRONT ? 0 : -180, 0, 0));
 
-        for (VuforiaTrackable trackable : allTrackables)
-        {
-            ((VuforiaTrackableDefaultListener)trackable.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
+        for (VuforiaTrackable trackable : allTrackables) {
+            ((VuforiaTrackableDefaultListener) trackable.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
         }
 
         frameQueue = vuforia.getFrameQueue();
@@ -152,16 +151,57 @@ public class Navigation {
         visionProcess = new Runnable() {
             public void run() {
                 while (!Thread.currentThread().isInterrupted()) {
-                    if(vuforiaActive) {
+                    if (vuforiaActive) {
                         double[] location = getLocation();
                         x = location[0];
                     }
-                    if(cvActive) {
-                        goldPosition = processFrame(vuforiaToMat());
+                    if (cvActive) {
+                        telemetry.addData("vision", "starting");
+                        telemetry.update();
+                        Mat rgb = vuforiaToMat();
+                        telemetry.addData("vision", rgb.channels());
+                        telemetry.update();
+                        Mat gray = new Mat();
+                        if(rgb != null) {
+                            Imgproc.cvtColor(rgb, gray, Imgproc.COLOR_RGB2GRAY);
+                            telemetry.addData("vision", "grayscale created");
+                            telemetry.update();
+                            mineralVision.processFrame(rgb, gray);
+                            telemetry.addData("vision", "frame processed");
+                            telemetry.update();
+                            goldPosition = mineralVision.getGoldPos();
+                            telemetry.addData("vision", "gold detected");
+                            telemetry.update();
+                        } else {
+                            telemetry.addData("rgb", "is null");
+                            telemetry.update();
+                        }
                     }
                 }
             }
         };
+    }
+
+    public void init() {
+        visionThread = new Thread(visionProcess);
+        visionThread.start();
+    }
+
+    public void stop() {
+        visionThread.interrupt();
+    }
+
+    public void setActiveVuforia(boolean active) {
+        vuforiaActive = active;
+        if (active) {
+            targetsRoverRuckus.activate();
+        } else {
+            targetsRoverRuckus.deactivate();
+        }
+    }
+
+    public void setActiveCv(boolean active) {
+        cvActive = active;
     }
 
     //x, y, hdg
@@ -194,16 +234,16 @@ public class Navigation {
             Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
             telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
             telemetry.update();
-            return new double[] {translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, rotation.thirdAngle};
+            return new double[]{translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, rotation.thirdAngle};
         } else {
             telemetry.addData("Visible Target", "none");
             telemetry.update();
         }
-        return new double[] {-1, -1, -1};
+        return new double[]{-1, -1, -1};
     }
 
-    public Mat vuforiaToMat() {
-        // returns null if correct image format not found or queue empty
+    private Mat vuforiaToMat() {
+        // returns empty Mat if correct image format not found or queue empty
         // grab frames and process them
         if (!frameQueue.isEmpty()) {
             VuforiaLocalizer.CloseableFrame vuforiaFrame = null;
@@ -216,7 +256,7 @@ public class Navigation {
             if (vuforiaFrame != null) {
                 for (int i = 0; i < vuforiaFrame.getNumImages(); i++) {
                     Image image = vuforiaFrame.getImage(i);
-                    if (image.getFormat() == PIXEL_FORMAT.RGB888) {
+                    if (image.getFormat() == PIXEL_FORMAT.RGB565) {
                         int imageWidth = image.getWidth(), imageHeight = image.getHeight();
                         ByteBuffer byteBuffer = image.getPixels();
                         if (frameBuffer == null) {
@@ -235,6 +275,7 @@ public class Navigation {
                         return frame;
                     }
                     telemetry.addData("correct format", "not found");
+                    telemetry.update();
                 }
                 vuforiaFrame.close();
             }
@@ -245,84 +286,6 @@ public class Navigation {
                 Thread.currentThread().interrupt();
             }
         }
-    }
-
-    public int processFrame(Mat rgb) {
-        // image processing
-        Mat gray = new Mat();
-        Imgproc.cvtColor(frame, gray, Imgproc.COLOR_RGB2HLS);
-        imageWidth = gray.width();
-        imageHeight = gray.height();
-        Imgproc.resize(gray, gray, new Size(imageWidth, imageHeight * 4 / 3));
-        Mat circles = new Mat();
-        Imgproc.HoughCircles(gray, circles, Imgproc.CV_HOUGH_GRADIENT, 2, 200, 100, 100, 20, 50);
-
-        double[] circle1 = circles.get(0,0);
-        double[] circle2 = circles.get(0,1);
-        telemetry.addData("exception", "none");
-
-        try {
-            // get gold position
-            double x1, x2, y1, y2;
-            if(circles.get(0, 0)[0] < circles.get(0, 1)[0]) {
-                x1 = circles.get(0, 0)[0];
-                x2 = circles.get(0, 1)[0];
-                y1 = circles.get(0, 0)[1];
-                y2 = circles.get(0, 1)[1];
-            } else {
-                x2 = circles.get(0, 0)[0];
-                x1 = circles.get(0, 1)[0];
-                y2 = circles.get(0, 0)[1];
-                y1 = circles.get(0, 1)[1];
-            }
-
-            int xleft = (int)(x1 - (x2 - x1));
-            int xmid = (int)((x1 + x2) / 2);
-            int xright = (int)(x2 + (x2 - x1));
-            int yleft = (int)(y1 - (y2 - y1));
-            int ymid = (int)((y1 + y2) / 2);
-            int yright = (int)(y2 + (y2 - y1));
-            if(localColorGold(rgb, xleft, yleft, 5)) {
-                return 0;
-            } else if(localColorGold(rgb, xmid, ymid, 5)) {
-                return 1;
-            } else if(localColorGold(rgb, xright, yright, 5)) {
-                return 2;
-            }
-            return -1;
-        } catch (NullPointerException e) {
-            telemetry.addData("exception", "two circles not found");
-            telemetry.update();
-            return -1;
-        }
-    }
-
-
-    /*public int getGoldPosBackup(Mat rgba) {
-        try {
-            double x1 = circles.get(0, 0)[0];
-            double x2 = circles.get(0, 1)[0];
-            if ((x2 + x1) / 2 < imageWidth / 3) {
-                return 2;
-            } else if ((x2 + x1) / 2 < imageWidth * 2 / 3) {
-                return 1;
-            } else {
-                return 0;
-            }
-        } catch (NullPointerException e) {
-            return 3;
-        }
-    }*/
-
-    private boolean localColorGold(Mat rgba, int x, int y, int radius) {
-        Mat localRegion = rgba.submat(new Rect(x - radius, y - radius, 2 * radius, 2 * radius));
-        Imgproc.cvtColor(localRegion, localRegion, Imgproc.COLOR_RGB2HLS);
-        Scalar mean = Core.mean(localRegion);
-        if(mean.val[0] > 40 && mean.val[0] < 70 &&
-                mean.val[1] > 75 && mean.val[1] < 200 &&
-                mean.val[2] > 150 && mean.val[2] < 255) {
-            return true;
-        }
-        return false;
+        return new Mat();
     }
 }

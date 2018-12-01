@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.Subsystems;
 import org.corningrobotics.enderbots.endercv.OpenCVPipeline;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.opencv.core.Core;
+import org.opencv.core.CvException;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
@@ -16,6 +17,10 @@ public class MineralVisionHough extends OpenCVPipeline {
     Mat main;
     Mat circles = new Mat();
     Telemetry telem;
+    double[] circle1, circle2;
+    int[][] candidatePos = new int[3][2];
+    int cannyThresh = 120;
+    int houghThresh = 180;
 
     public synchronized void setShowCountours(boolean enabled) {
         showContours = enabled;
@@ -35,64 +40,73 @@ public class MineralVisionHough extends OpenCVPipeline {
         Imgproc.resize(rgba, rgba, new Size(imageWidth, imageHeight * 4 / 3));
         Imgproc.resize(gray, gray, new Size(imageWidth, imageHeight * 4 / 3));
         circles = new Mat();
-        Imgproc.HoughCircles(gray, circles, Imgproc.CV_HOUGH_GRADIENT, 2, 200, 100, 100, 20, 50);
-
-        double[] circle1 = circles.get(0,0);
-        double[] circle2 = circles.get(0,1);
-        telem.addData("exception", "none");
-        main = rgba;
-        try {
-            if(showContours) {
-                Imgproc.circle(rgba, new Point(circle1[0], circle1[1]), (int) circle1[2], new Scalar(0, 0, 255), 3);
-                Imgproc.circle(rgba, new Point(circle2[0], circle2[1]), (int) circle2[2], new Scalar(255, 0, 0), 3);
-            }
-        } catch (NullPointerException e) {
-            telem.addData("exception", "two circles not found");
-            telem.update();
+        Imgproc.HoughCircles(gray, circles, Imgproc.CV_HOUGH_GRADIENT, 2, 50, cannyThresh, houghThresh, 30, 100);
+        if(circles.cols() < 2) {
+            cannyThresh--;
+            houghThresh--;
             return rgba;
+        } else if(circles.cols() > 2) {
+            cannyThresh++;
+            houghThresh++;
+        }
+        circle1 = circles.get(0,0);
+        circle2 = circles.get(0,1);
+        main = rgba;
+        //
+        double x1, x2, y1, y2;
+        if(circle1[1] < circle2[1]) {
+            x1 = circle1[0];
+            x2 = circle2[0];
+            y1 = circle1[1];
+            y2 = circle2[1];
+        } else {
+            x2 = circle1[0];
+            x1 = circle2[0];
+            y2 = circle1[1];
+            y1 = circle2[1];
         }
 
+        candidatePos[0][0] = (int)(x1 - (x2 - x1));
+        candidatePos[1][0] = (int)((x1 + x2) / 2);
+        candidatePos[2][0] = (int)(x2 + (x2 - x1));
+        candidatePos[0][1] = (int)(y1 - (y2 - y1));
+        candidatePos[1][1] = (int)((y1 + y2) / 2);
+        candidatePos[2][1] = (int)(y2 + (y2 - y1));
+        //
+        if(showContours) {
+            Imgproc.circle(rgba, new Point(circle1[0], circle1[1]), (int) circle1[2], new Scalar(0, 0, 255), 3);
+            Imgproc.circle(rgba, new Point(circle2[0], circle2[1]), (int) circle2[2], new Scalar(255, 0, 0), 3);
+            int position = getGoldPos();
+            if(position == -1) {
+                Imgproc.circle(rgba, new Point(candidatePos[0][0], candidatePos[0][1]), 10, new Scalar(0, 255, 0), 2);
+                Imgproc.circle(rgba, new Point(candidatePos[1][0], candidatePos[1][1]), 10, new Scalar(0, 255, 0), 2);
+                Imgproc.circle(rgba, new Point(candidatePos[2][0], candidatePos[2][1]), 10, new Scalar(0, 255, 0), 2);
+            } else {
+                Imgproc.circle(rgba, new Point(candidatePos[position][0], candidatePos[position][1]), 10, new Scalar(0, 255, 0), 2);
+            }
+        }
         return rgba;
     }
 
     public int getGoldPos() {
         try {
-            double x1, x2, y1, y2;
-            if(circles.get(0, 0)[0] < circles.get(0, 1)[0]) {
-                x1 = circles.get(0, 0)[0];
-                x2 = circles.get(0, 1)[0];
-                y1 = circles.get(0, 0)[1];
-                y2 = circles.get(0, 1)[1];
-            } else {
-                x2 = circles.get(0, 0)[0];
-                x1 = circles.get(0, 1)[0];
-                y2 = circles.get(0, 0)[1];
-                y1 = circles.get(0, 1)[1];
-            }
-
-            int xleft = (int)(x1 - (x2 - x1));
-            int xmid = (int)((x1 + x2) / 2);
-            int xright = (int)(x2 + (x2 - x1));
-            int yleft = (int)(y1 - (y2 - y1));
-            int ymid = (int)((y1 + y2) / 2);
-            int yright = (int)(y2 + (y2 - y1));
-            if(localColorGold(main, xleft, yleft, 5)) {
+            if(localColorGold(main, candidatePos[0][0], candidatePos[0][1], 5)) {
                 return 0;
-            } else if(localColorGold(main, xmid, ymid, 5)) {
+            } else if(localColorGold(main, candidatePos[1][0], candidatePos[1][1], 5)) {
                 return 1;
-            } else if(localColorGold(main, xright, yright, 5)) {
+            } else if(localColorGold(main, candidatePos[2][0], candidatePos[2][1], 5)) {
                 return 2;
             }
-            return 3;
-        } catch (NullPointerException e) {
-            return 3;
+            return -1;
+        } catch (Exception e) {
+            return -1;
         }
     }
 
     public int getGoldPosBackup(Mat rgba) {
         try {
-            double x1 = circles.get(0, 0)[0];
-            double x2 = circles.get(0, 1)[0];
+            double x1 = circle1[0];
+            double x2 = circle2[0];
             if ((x2 + x1) / 2 < imageWidth / 3) {
                 return 2;
             } else if ((x2 + x1) / 2 < imageWidth * 2 / 3) {
@@ -100,20 +114,24 @@ public class MineralVisionHough extends OpenCVPipeline {
             } else {
                 return 0;
             }
-        } catch (NullPointerException e) {
-            return 3;
+        } catch (Exception e) {
+            return -1;
         }
     }
 
-    private boolean localColorGold(Mat rgba, int x, int y, int radius) {
-        Mat localRegion = rgba.submat(new Rect(x - radius, y - radius, 2 * radius, 2 * radius));
-        Imgproc.cvtColor(localRegion, localRegion, Imgproc.COLOR_RGB2HLS);
-        Scalar mean = Core.mean(localRegion);
-        if(mean.val[0] > 40 && mean.val[0] < 70 &&
-            mean.val[1] > 75 && mean.val[1] < 200 &&
-            mean.val[2] > 150 && mean.val[2] < 255) {
-            return true;
+    private boolean localColorGold(Mat rgba, int x, int y, int squareRadius) {
+        try {
+            Mat localRegion = rgba.submat(new Rect(x - squareRadius, y - squareRadius, 2 * squareRadius, 2 * squareRadius));
+            Imgproc.cvtColor(localRegion, localRegion, Imgproc.COLOR_RGB2HLS);
+            Scalar mean = Core.mean(localRegion);
+            if (mean.val[0] > 10 && mean.val[0] < 30 &&
+                    mean.val[1] > 90 && mean.val[1] < 160 &&
+                    mean.val[2] > 115 && mean.val[2] < 200) {
+                return true;
+            }
+            return false;
+        } catch (CvException e) {
+            return false;
         }
-        return false;
     }
 }

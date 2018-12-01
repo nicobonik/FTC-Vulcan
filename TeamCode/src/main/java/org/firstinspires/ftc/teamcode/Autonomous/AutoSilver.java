@@ -14,7 +14,7 @@ import org.firstinspires.ftc.teamcode.Subsystems.MineralVisionHough;
 import org.firstinspires.ftc.teamcode.Subsystems.Robot;
 
 @Autonomous(name = "TestAutonomous", group="Auto")
-public class AutoSilver extends LinearOpMode{
+public class AutoSilver extends LinearOpMode {
     private Robot robot;
     private ElapsedTime Runtime = new ElapsedTime();
     private MineralVisionHough houghVision;
