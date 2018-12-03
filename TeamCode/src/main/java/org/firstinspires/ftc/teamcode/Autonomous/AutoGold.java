@@ -22,7 +22,7 @@ public class AutoGold extends LinearOpMode {
     public void runOpMode() {
         robot = new Robot(hardwareMap);
         houghVision = new MineralVisionHough();
-        houghVision.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
+        //houghVision.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
         houghVision.setShowCountours(false);
         houghVision.setTelem(telemetry);
         //start on ground, init IMU, then pull up before match starts
@@ -51,11 +51,11 @@ public class AutoGold extends LinearOpMode {
         while(getRuntime() < startTime + 0.5) {}
         robot.arm.extend(0);
         //take video of sampling field, find most commonly detected gold position
-        houghVision.enable();
+        //houghVision.enable();
         for(int i = 0; i < 10; i++) {
             goldPos[houghVision.getGoldPos()]++;
         }
-        houghVision.disable();
+        //houghVision.disable();
         int max = 0;
         int argmax = 3;
         for(int i = 0; i < 2; i++) {

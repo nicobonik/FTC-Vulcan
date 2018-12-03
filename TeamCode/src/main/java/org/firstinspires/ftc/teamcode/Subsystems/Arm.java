@@ -10,7 +10,7 @@ public class Arm extends Subsystem {
     private final double revsPerInch = 10; //placeholder
     private final double maximumExtension = 10000; //placeholder
     //private final double maxVoltage;
-    private volatile double swingPosition, extendPosition, swingPower, extendPower;
+    public volatile double swingPosition, extendPosition, swingPower, extendPower;
     private volatile boolean swingPIDActive, extendPIDActive;
     public DcMotor[] arm;
     private DcMotor extender;
@@ -66,14 +66,22 @@ public class Arm extends Subsystem {
         if(swingPIDActive) {
             swingPID.maintainOnce(swingPosition, 2);
         } else {
-            if((Math.abs(arm[1].getCurrentPosition()) > ticksPerRevolution / 4 && swingPower > 0) || (Math.abs(arm[1].getCurrentPosition()) < 0 && swingPower < 0)) {
+            /*if((Math.abs(arm[1].getCurrentPosition()) > ticksPerRevolution / 4 && arm[1].getPower() > 0) || (Math.abs(arm[1].getCurrentPosition()) < 0 && arm[1].getPower() < 0)) {
                 arm[0].setPower(0);
                 arm[1].setPower(0);
             } else {
-                double pow = Math.max(Math.min(Math.min(swingPower, ((ticksPerRevolution / 4) - arm[1].getCurrentPosition()) / 250), arm[1].getCurrentPosition() / 250), 0.1);
+                double pow = swingPower;
+                if(arm[1].getCurrentPosition() < 200) {
+                    pow *= arm[1].getCurrentPosition() / 200;
+                } else if(ticksPerRevolution / 4 - arm[1].getCurrentPosition() < 200) {
+                    pow *= (ticksPerRevolution / 4 - arm[1].getCurrentPosition()) / 200;
+                }
+                pow = (pow >= 0 ? 1 : -1) * Math.max(Math.abs(0.1 * swingPower), Math.abs(pow));
                 arm[0].setPower(pow);
                 arm[1].setPower(pow);
-            }
+            }*/
+            arm[0].setPower(swingPower);
+            arm[1].setPower(swingPower);
         }
         if(extendPIDActive) {
             extendPID.maintainOnce(extendPosition, 2);

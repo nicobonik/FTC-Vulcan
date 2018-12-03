@@ -39,6 +39,7 @@ public class MineralVisionHough extends OpenCVPipeline {
         imageHeight = rgba.height();
         Imgproc.resize(rgba, rgba, new Size(imageWidth, imageHeight * 4 / 3));
         Imgproc.resize(gray, gray, new Size(imageWidth, imageHeight * 4 / 3));
+        Core.inRange(gray, new Scalar(120), new Scalar(200), gray);
         circles = new Mat();
         Imgproc.HoughCircles(gray, circles, Imgproc.CV_HOUGH_GRADIENT, 2, 50, cannyThresh, houghThresh, 30, 100);
         if(circles.cols() < 2) {

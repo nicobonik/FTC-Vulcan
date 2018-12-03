@@ -22,7 +22,7 @@ public class Intake extends Subsystem {
 
     public void updateSubsystem() {
         intake.setPower(power);
-        door.setPosition((position * 0.4) + 0.15);
+        door.setPosition((position * 0.4) + 0.3);
     }
 
     public void intake(double power) {

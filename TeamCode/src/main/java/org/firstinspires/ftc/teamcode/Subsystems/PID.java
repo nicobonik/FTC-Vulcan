@@ -69,8 +69,7 @@ public class PID {
         //Derivative
         response += (Kd * (error - lastError) / (timer.time() - lastTime));
         //Bias
-        response += bias;
-
+        response = Math.signum(response) * Math.max(bias, Math.abs(response));
         lastError = error;
         return response;
     }
@@ -89,10 +88,11 @@ public class PID {
 
     public boolean maintainOnce(double target, double margin) {
         if (Math.abs(control.getPosition() - target) > margin) {
+            double response = getResponse(control.getPosition(), target);
             if(limit) {
-                control.setPower(Range.clip(getResponse(control.getPosition(), target), minPow, maxPow));
+                control.setPower(Range.clip(response, minPow, maxPow));
             } else {
-                control.setPower(getResponse(control.getPosition(), target));
+                control.setPower(response);
             }
             return true;
         }

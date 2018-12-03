@@ -21,11 +21,10 @@ public class Drivetrain extends Subsystem {
     private volatile boolean drivePIDActive, turnPIDActive;
     public static final double BASE_POWER = 0.9;
     public double tempPower = BASE_POWER;
+    public double rearMultiplier = 1.0;
     private DcMotor[] motors = new DcMotor[4];
     private BNO055IMU imu;
     private BNO055IMU.Parameters parameters;
-    private Orientation zeroOrientation;
-    //private ModernRoboticsI2cGyro gyro;
     private Thread systemThread;
     public PID drivePID, turnPID;
 
@@ -36,6 +35,7 @@ public class Drivetrain extends Subsystem {
         motors[3] = backRight;
         imu = IMU;
 
+        setM(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setM(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         setZeroP(DcMotor.ZeroPowerBehavior.FLOAT);
 
@@ -44,7 +44,7 @@ public class Drivetrain extends Subsystem {
         motors[2].setDirection(DcMotor.Direction.REVERSE);
         motors[3].setDirection(DcMotor.Direction.FORWARD);
 
-        drivePID = new PID(-0.4, -0.7, 0.7, 0, new PowerControl() {
+        drivePID = new PID(-0.4, -0.7, 0.7, 0.05, new PowerControl() {
             public void setPower(double power) {
                 for (int i = 0; i < 4; i++) {
                     speeds[i] += power;
@@ -60,7 +60,7 @@ public class Drivetrain extends Subsystem {
             }
         });
 
-        turnPID = new PID(-0.025, -0.035, 0.035, 0, new PowerControl() {
+        turnPID = new PID(-0.067, -0.035, 0.035, 0.05, new PowerControl() {
             public void setPower(double power) {
                 for (int i = 0; i < 4; i++) {
                     speeds[i] += Range.clip(power, -1.0, 1.0) * (i % 2 == 0 ? -1 : 1);
@@ -127,18 +127,7 @@ public class Drivetrain extends Subsystem {
         parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
         parameters.loggingEnabled = false;
 
-        imu.initialize(parameters);
-        while (!imu.isGyroCalibrated()) {}
-        resetOrientation();
-    }
-
-    /*public void resetOrientationGyro() {
-        gyro.resetZAxisIntegrator();
-    }*/
-
-    public void resetOrientation()
-    {
-        zeroOrientation = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        while (!imu.initialize(parameters) || !imu.isGyroCalibrated()) {}
     }
 
     public void arcadeDrive(double forward, double turn) {
@@ -189,6 +178,11 @@ public class Drivetrain extends Subsystem {
         }
         if(turn != 0) {
             turnPIDActive = false;
+        } else {
+            if(!turnPIDActive) {
+                turnTarget = (int)imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+            }
+            turnPIDActive = true;
         }
     }
 
@@ -210,30 +204,9 @@ public class Drivetrain extends Subsystem {
         drivePIDActive = true;
     }
 
-    /*public void turnEnc(int degrees) {
-        double distance = botCirc * degrees / 360;
-        setM(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        setM(DcMotor.RunMode.RUN_TO_POSITION);
-        for (int motor = 0; motor < 4; motor++) {
-            motors[motor].setPower(turnMult * tempPower);
-            motors[motor].setTargetPosition((int)(distance * ticksPerInch) * ((motor % 2 == 0) ? 1 : -1));
-        }
-        while (busy()) {}
-        stop();
-    }*/
-
-    /*public void turnGyro(int degrees) {
-        resetOrientationGyro();
-        setM(DcMotor.RunMode.RUN_USING_ENCODER);
-        turnTarget = degrees;
-        turnPID.reset();
-        turnPIDActive = true;
-    }*/
-
     public void turn(int degrees) {
-        resetOrientation();
         setM(DcMotor.RunMode.RUN_USING_ENCODER);
-        turnTarget = degrees;
+        turnTarget = (int)imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle + degrees;
         turnPID.reset();
         turnPIDActive = true;
     }
@@ -260,10 +233,10 @@ public class Drivetrain extends Subsystem {
     }
 
     public void stop() {
-        //driveEnc(0);
-        //turnIMU(0);
-        setM(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        drivePIDActive = false;
+        turnPIDActive = false;
         speeds(new double[] {0, 0, 0, 0});
+        setM(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
     public void setZeroP(DcMotor.ZeroPowerBehavior behavior) {
