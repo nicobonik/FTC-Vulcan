@@ -64,24 +64,20 @@ public class Arm extends Subsystem {
 
     public void updateSubsystem() {
         if(swingPIDActive) {
-            swingPID.maintainOnce(swingPosition, 2);
+            swingPIDActive = swingPID.maintainOnce(swingPosition, 2);
         } else {
-            /*if((Math.abs(arm[1].getCurrentPosition()) > ticksPerRevolution / 4 && arm[1].getPower() > 0) || (Math.abs(arm[1].getCurrentPosition()) < 0 && arm[1].getPower() < 0)) {
+            if((Math.abs(arm[1].getCurrentPosition()) > ticksPerRevolution / 4 && arm[1].getPower() > 0) || (Math.abs(arm[1].getCurrentPosition()) < 0 && arm[1].getPower() < 0)) {
                 arm[0].setPower(0);
                 arm[1].setPower(0);
+                swingPower = 0;
             } else {
-                double pow = swingPower;
-                if(arm[1].getCurrentPosition() < 200) {
-                    pow *= arm[1].getCurrentPosition() / 200;
-                } else if(ticksPerRevolution / 4 - arm[1].getCurrentPosition() < 200) {
-                    pow *= (ticksPerRevolution / 4 - arm[1].getCurrentPosition()) / 200;
-                }
-                pow = (pow >= 0 ? 1 : -1) * Math.max(Math.abs(0.1 * swingPower), Math.abs(pow));
+                int distance = Math.min(arm[1].getCurrentPosition(), (ticksPerRevolution / 4) - arm[1].getCurrentPosition());
+                double limit = Range.clip(distance / 200, 0.075, 1.0);
+                double pow = Range.clip(swingPower, -limit, limit);
+
                 arm[0].setPower(pow);
                 arm[1].setPower(pow);
-            }*/
-            arm[0].setPower(swingPower);
-            arm[1].setPower(swingPower);
+            }
         }
         if(extendPIDActive) {
             extendPID.maintainOnce(extendPosition, 2);
@@ -91,7 +87,9 @@ public class Arm extends Subsystem {
     }
 
     public void swing(double speed) {
-        swingPIDActive = false;
+        if(speed != 0) {
+            swingPIDActive = false;
+        }
         double power = (speed / 0.7) * (0.3 * Math.pow(speed, 6) + 0.4);
         swingPower += (power - swingPower) / 2;
     }
