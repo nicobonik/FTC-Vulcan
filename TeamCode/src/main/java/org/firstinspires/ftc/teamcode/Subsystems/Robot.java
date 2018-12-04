@@ -25,18 +25,15 @@ public class Robot {
 
     public Robot(HardwareMap hwMap, Telemetry telem) {
         telemetry = telem;
-        telemetry.addData("constructr", "start");
-        telemetry.update();
         telemetryPackets = new LinkedHashMap<>();
         hardwareMap = hwMap;
-        telemetry.addData("subsystem init", "start");
-        telemetry.update();
         drivetrain = new Drivetrain(
-                hardwareMap.dcMotor.get("front_left"),
-                hardwareMap.dcMotor.get("front_right"),
-                hardwareMap.dcMotor.get("back_left"),
-                hardwareMap.dcMotor.get("back_right"),
-                hardwareMap.get(BNO055IMU.class, "imu")
+            hardwareMap.dcMotor.get("front_left"),
+            hardwareMap.dcMotor.get("front_right"),
+            hardwareMap.dcMotor.get("back_left"),
+            hardwareMap.dcMotor.get("back_right"),
+            hardwareMap.get(BNO055IMU.class, "imu"),
+            hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName())
         );
         arm = new Arm(
             new DcMotor[] {hardwareMap.dcMotor.get("arm_left"), hardwareMap.dcMotor.get("arm_right")},
@@ -66,25 +63,6 @@ public class Robot {
                 }
             }
         };
-        /*telemetryUpdater = new Runnable() {
-            public void run() {
-                try {
-                    Thread.sleep(100);
-                    while (!Thread.currentThread().isInterrupted()) {
-                        for (String key : telemetryPackets.keySet()) {
-                            telemetry.addData(key, telemetryPackets.get(key));
-                        }
-                    }
-                } catch (InterruptedException e) {
-                    telemetry.addData("interrupted", true);
-                    telemetry.update();
-                    Thread.currentThread().interrupt();
-                    stop();
-                }
-            }
-        };*/
-        telemetry.addData("constructor", "done");
-        telemetry.update();
     }
 
     public void init() {

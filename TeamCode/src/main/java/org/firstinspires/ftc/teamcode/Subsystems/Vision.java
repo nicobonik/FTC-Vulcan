@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.Subsystems;
 import android.graphics.Bitmap;
 import android.widget.FrameLayout;
 
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.vuforia.Image;
 import com.vuforia.PIXEL_FORMAT;
 import com.vuforia.Vuforia;
@@ -39,16 +40,15 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.FRONT;
 
 public class Vision {
-    //Location
-    private double x = 0;
-    private double y = 0;
-    private double hdg = 0;
+    // Location
+    private volatile double x, y, hdg;
+    private ElapsedTime timer;
 
-    //OpenCV
+    // OpenCV
     private MineralVisionHough mineralVision = new MineralVisionHough();
     private int goldPosition;
 
-    //Vuforia
+    // Vuforia
     private static final String VUFORIA_KEY = "AaLwOCr/////AAABGav2GMoitk79tCVWogR++j4qdtG1lQgtNBy8Vvyb1hRG2re62CXytFbaSWxaTBL5d+dZlWlOL3DGc1SRxOx+FKiGaP73ct6eGoWuZiQW0RjcPCxJ1LZwPJfs5D1I+B0lUK09sGbpF5LO6yKpWG7P9TmrZ5PpB+W4Xj/hduc0c5LMX09z4acyb0GQMRXzjtdgWDvgjNp53x9nea8/UwRfeUgMN0x5Tzj9H9ALjYr54U112ev1WxcGzaC9xjpKQ96KxIDAT5h1GN8i3j0b5FVI4rp/lC17Lsjkz9thrVw0YCZXOTmdD5sZktkNIbj97B6y4BUrDkBaJNAmQiQSmG9DHVr7r9kTW3WiQ/khg1u0ciou";
 
     // Since ImageTarget trackables use mm to specifiy their dimensions, we must use mm for all the physical dimension.
@@ -57,9 +57,9 @@ public class Vision {
     private static final float mmFTCFieldWidth = (12 * 6) * mmPerInch;       // the width of the FTC field (from the center point to the outer panels)
     private static final float mmTargetHeight = (6) * mmPerInch;          // the height of the center of the target image above the floor
 
-    final int CAMERA_FORWARD_DISPLACEMENT = 110;   // eg: Camera is 110 mm in front of robot center
-    final int CAMERA_VERTICAL_DISPLACEMENT = 200;   // eg: Camera is 200 mm above ground
-    final int CAMERA_LEFT_DISPLACEMENT = 0;     // eg: Camera is ON the robot's center line
+    private final int CAMERA_FORWARD_DISPLACEMENT = 110;   // eg: Camera is 110 mm in front of robot center
+    private final int CAMERA_VERTICAL_DISPLACEMENT = 200;   // eg: Camera is 200 mm above ground
+    private final int CAMERA_LEFT_DISPLACEMENT = 0;     // eg: Camera is ON the robot's center line
 
     // Select which camera you want use.  The FRONT camera is the one on the same side as the screen.
     // Valid choices are:  BACK or FRONT
@@ -98,8 +98,8 @@ public class Vision {
      * LEFT = +Y
      * UP = +Z
      */
-    public Vision(int cameraMonitorViewId, Telemetry telem) {
-        telemetry = telem;
+    public Vision(int cameraMonitorViewId, ElapsedTime timer) {
+        this.timer = timer;
 
         parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
 
@@ -164,25 +164,12 @@ public class Vision {
                         hdg = location[2];
                     }
                     if (cvActive) {
-                        telemetry.addData("vision", "started");
-                        telemetry.update();
                         Mat rgb = vuforiaToMat();
-                        telemetry.addData("rgb", "acquired");
-                        telemetry.update();
                         if(rgb != null) {
                             Mat gray = new Mat();
                             Imgproc.cvtColor(rgb, gray, Imgproc.COLOR_RGB2GRAY);
-                            telemetry.addData("gray", "created");
-                            telemetry.update();
                             mineralVision.processFrame(rgb, gray);
-                            telemetry.addData("vision", "frame processed");
-                            telemetry.update();
                             goldPosition = mineralVision.getGoldPos();
-                            telemetry.addData("vision", goldPosition);
-                            telemetry.update();
-                        } else {
-                            telemetry.addData("rgb", "is null");
-                            telemetry.update();
                         }
                     }
                 }
@@ -235,26 +222,17 @@ public class Vision {
         if (targetVisible) {
             // express position (translation) of robot in inches.
             VectorF translation = lastLocation.getTranslation();
-            telemetry.addData("Pos (in)", "{X, Y, Z} = %.1f, %.1f, %.1f",
-                    translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, translation.get(2) / mmPerInch);
 
             // express the rotation of the robot in degrees.
             Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
-            telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
-            telemetry.update();
-            return new double[]{translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, rotation.thirdAngle};
-        } else {
-            telemetry.addData("Visible Target", "none");
-            telemetry.update();
+            return new double[] {translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, rotation.thirdAngle, timer.milliseconds()};
         }
-        return new double[]{-1, -1, 361};
+        return new double[] {0, 0, 0, -1};
     }
 
     private Mat vuforiaToMat() {
         // returns empty Mat if correct image format not found or queue empty
         // grab frames and process them
-        telemetry.addData("conversion", "started");
-        telemetry.update();
         if (!frameQueue.isEmpty()) {
             VuforiaLocalizer.CloseableFrame vuforiaFrame = null;
             try {
@@ -262,36 +240,20 @@ public class Vision {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-            telemetry.addData("frame", "taken");
-            telemetry.update();
             if (vuforiaFrame != null) {
                 Image rgb = vuforiaFrame.getImage(0);
-                telemetry.addData("Frame size", vuforiaFrame.getNumImages());
                 for (int i = 0; i < vuforiaFrame.getNumImages(); i++) {
                     rgb = vuforiaFrame.getImage(i);
-                    telemetry.addData("image" + i, rgb.getFormat());
                     if (rgb.getFormat() == PIXEL_FORMAT.RGB565) {
-                        telemetry.addData("image", "acquired");
                         break;
                     }
                 }
-                telemetry.update();
                 Bitmap bm = Bitmap.createBitmap(rgb.getWidth(), rgb.getHeight(), Bitmap.Config.RGB_565);
                 bm.copyPixelsFromBuffer(rgb.getPixels());
-                telemetry.addData("bitmap", "created");
-                telemetry.update();
                 //put the image into a MAT for OpenCV
                 Mat tmp = new Mat(rgb.getWidth(), rgb.getHeight(), CvType.CV_8UC4);
-                telemetry.addData("mat", "created");
-                try {
-                    Utils.bitmapToMat(bm, tmp);
-                    telemetry.addData("conversion", "done");
-                } catch (Exception e) {
-                    telemetry.addData("exception", e.toString());
-                    telemetry.update();
-                }
+                Utils.bitmapToMat(bm, tmp);
                 vuforiaFrame.close();
-                telemetry.addData("frame", "closed");
                 return tmp;
             }
         } else {

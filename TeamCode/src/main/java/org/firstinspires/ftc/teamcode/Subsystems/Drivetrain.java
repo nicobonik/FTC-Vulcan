@@ -11,6 +11,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -28,15 +29,17 @@ public class Drivetrain extends Subsystem {
     private DcMotor[] motors = new DcMotor[4];
     private BNO055IMU imu;
     private BNO055IMU.Parameters parameters;
+    private Navigation nav;
     private Thread systemThread;
     public PID drivePID, turnPID;
 
-    public Drivetrain(DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight, BNO055IMU IMU) {
+    public Drivetrain(DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight, BNO055IMU IMU, int cameraId) {
         motors[0] = frontLeft;
         motors[1] = frontRight;
         motors[2] = backLeft;
         motors[3] = backRight;
         imu = IMU;
+        nav = new Navigation(imu, cameraId);
 
         setM(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setM(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -226,15 +229,24 @@ public class Drivetrain extends Subsystem {
         turnPIDActive = true;
     }
 
-    /*public void driveTo(double x, double y) throws InterruptedException {
-        double distance = Math.sqrt((x - pX) * (x - pX) + (y - pY) * (y - pY));
-        double angle = Math.atan((y - pY) / (x - pX));
-        turnGyro((int)angle);
+    public void driveTo(double x, double y) {
+        double distance = Math.hypot((x - nav.x), (y - nav.y));
+        double angle = Math.atan2(y - nav.y, x - nav.x);
+        turn((int)(angle - nav.hdg));
         driveEnc(distance);
-    }*/
+    }
+
+    public void driveTo(int node) {
+        ArrayList<Integer> path = nav.aStar(nav.closestNode(), node);
+        while(path.size() > 0) {
+            double[] nextNodePos = nav.nodePos(path.get(path.size() - 1));
+            path.remove(path.size() - 1);
+            driveTo(nextNodePos[0], nextNodePos[1]);
+        }
+    }
 
     public int heading() {
-        return (int)imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+        return (int)nav.hdg;
     }
 
     public String speeds() {

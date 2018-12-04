@@ -1,12 +1,18 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Navigation {
-    double x, y, hdg;
-    int numNodes = 26;
-    double[][] map = {
+    public double x, y, hdg;
+    private BNO055IMU imu;
+    private Vision vis;
+    private ElapsedTime timer;
+    private int numNodes = 26;
+    private double[][] map = {
             {-60, -60},
             {-36, -60},
             {0, -60},
@@ -35,8 +41,7 @@ public class Navigation {
             {36, 60},
             {60, 60}
     };
-
-    int[][] connections =
+    private int[][] connections =
     {
             {1, 5},
             {0, 2, 5},
@@ -65,11 +70,26 @@ public class Navigation {
             {21, 25}
     };
 
-    public Navigation() {
+    public Navigation(BNO055IMU imu, int cameraId) {
+        timer = new ElapsedTime();
+        timer.reset();
+        this.imu = imu;
+        vis = new Vision(cameraId, timer);
+    }
 
+    public void update() {
+        double[] location = vis.getLocation();
+        if(location[3] > 0) { //x, y, hdg, timestamp
+            x = location[0];
+            y = location[1];
+            hdg = location[2];
+            double timeSince = timer.milliseconds() - location[3];
+        }
+        //todo: store all gyro and accelerometer values, clear list each frame (even if no target found), use it to correct position
     }
 
     //for each node, figures out neighbor node through which the best path passes to get to that node
+    //then returns the best path to dst
     public ArrayList<Integer> aStar(int src, int dst) {
         ArrayList<Integer> closedSet = new ArrayList<>();
         ArrayList<Integer> openSet = new ArrayList<Integer>();
@@ -117,7 +137,7 @@ public class Navigation {
 
     //returns best path by node index
     private ArrayList<Integer> reconstructPath(ArrayList<Integer> cameFrom, int current) {
-        ArrayList<Integer> totalPath = new ArrayList();
+        ArrayList<Integer> totalPath = new ArrayList<>();
         totalPath.add(current);
 
         while (cameFrom.get(current) != null) {
@@ -136,6 +156,14 @@ public class Navigation {
             }
         }
         return closest;
+    }
+
+    public int closestNode() {
+        return closestNode(x, y);
+    }
+
+    public double[] nodePos(int node) {
+        return new double[] {map[node][0], map[node][1]};
     }
 
     private double distance(int src, int dst) {
