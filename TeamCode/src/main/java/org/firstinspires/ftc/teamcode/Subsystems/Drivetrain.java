@@ -62,17 +62,20 @@ public class Drivetrain extends Subsystem {
                 return sum / 4 / ticksPerInch;
             }
         });
+        drivePID.limitOutput(-1, 1);
 
-        turnPID = new PID(-0.067, -0.035, 0.035, 0.05, new PowerControl() {
+        turnPID = new PID(-0.01, -0.01, 0.05, 0.05, new PowerControl() {
             public void setPower(double power) {
-                for (int i = 0; i < 4; i++) {
-                    speeds[i] += Range.clip(power, -1.0, 1.0) * (i % 2 == 0 ? -1 : 1);
-                }
+                speeds[0] = power;
+                speeds[2] = power;
+                speeds[1] = -power;
+                speeds[3] = -power;
             }
             public double getPosition() {
                 return imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
             }
         }, -180, 180);
+        turnPID.limitOutput(-1, 1);
 
         tempPower = BASE_POWER;
         drivePIDActive = false;
@@ -88,24 +91,24 @@ public class Drivetrain extends Subsystem {
     }
 
     public LinkedHashMap<String, String> updateSubsystem() {
+        for(int i = 0; i < 4; i++) {
+            speeds[i] = 0;
+        }
         mecanumDrive(-ly, lx, rx, 0.8);
         if(drivePIDActive) {
-            for(int i = 0; i < 4; i++) {
-                speeds[i] = 0;
-            }
             drivePIDActive = drivePID.maintainOnce(driveTarget, driveMargin);
         }
         if(turnPIDActive) {
             turnPIDActive = turnPID.maintainOnce(turnTarget, turnMargin);
         }
-        //experimental
-        double angle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).secondAngle;
+        /*//experimental
+        double angle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES).firstAngle;
         if(Math.abs(angle) > 10) {
             for (int i = 0; i < 4; i++) {
                 speeds[i] = -Math.signum(angle) * 0.5;
             }
         }
-        //
+        //*/
         double max = Math.max(Math.max(Math.max(Math.max(Math.abs(speeds[0]), Math.abs(speeds[1])), Math.abs(speeds[2])), Math.abs(speeds[3])), 1);
         for (int i = 0; i < 4; i++) {
             motors[i].setPower(tempPower * speeds[i] / max);
@@ -266,15 +269,6 @@ public class Drivetrain extends Subsystem {
             motors[motor].setMode(mode);
         }
     }
-
-    /*private boolean busy() {
-        for (DcMotor motor: motors) {
-            if (motor.getMode() == DcMotor.RunMode.RUN_TO_POSITION && motor.isBusy()) {
-                return true;
-            }
-        }
-        return false;
-    }*/
 
     public void whileBusy() {
         while(drivePIDActive || turnPIDActive) {}

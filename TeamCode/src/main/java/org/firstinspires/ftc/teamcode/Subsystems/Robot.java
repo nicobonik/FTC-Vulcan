@@ -25,8 +25,12 @@ public class Robot {
 
     public Robot(HardwareMap hwMap, Telemetry telem) {
         telemetry = telem;
+        telemetry.addData("constructr", "start");
+        telemetry.update();
         telemetryPackets = new LinkedHashMap<>();
         hardwareMap = hwMap;
+        telemetry.addData("subsystem init", "start");
+        telemetry.update();
         drivetrain = new Drivetrain(
                 hardwareMap.dcMotor.get("front_left"),
                 hardwareMap.dcMotor.get("front_right"),
@@ -51,7 +55,8 @@ public class Robot {
                     while (!Thread.currentThread().isInterrupted()) {
                         for (Subsystem subsystem : subsystems) {
                             if (subsystem != null) {
-                                telemetryPackets.putAll(subsystem.updateSubsystem());
+                                //telemetryPackets.putAll(subsystem.updateSubsystem());
+                                subsystem.updateSubsystem();
                             }
                         }
                     }
@@ -78,13 +83,19 @@ public class Robot {
                 }
             }
         };*/
+        telemetry.addData("constructor", "done");
+        telemetry.update();
     }
 
     public void init() {
+        telemetry.addData("init", "start");
+        telemetry.update();
         subsystemUpdateThread = new Thread(subsystemUpdater);
         subsystemUpdateThread.start();
         //telemetryUpdateThread = new Thread(telemetryUpdater);
         //telemetryUpdateThread.start();
+        telemetry.addData("thread", "started");
+        telemetry.update();
     }
 
     public void stop() {
