@@ -47,15 +47,9 @@ public class NormieTeleop extends OpMode {
         } else if(gamepad1.y && !lastY) {
             robot.intake.door(false);
         }
-        if(gamepad1.left_bumper) {
-            robot.drivetrain.rearMultiplier += 0.01;
-        } else if(gamepad1.right_bumper) {
-            robot.drivetrain.rearMultiplier -= 0.01;
-        }
-        telemetry.addData("mult", robot.drivetrain.rearMultiplier);
-        telemetry.update();
         lastY = gamepad1.y;
         robot.drivetrain.setGamepadState(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
+        telemetry.addData("loop", "completed");
     }
 
     public void stop() {

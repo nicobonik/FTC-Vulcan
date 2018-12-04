@@ -4,9 +4,11 @@ import org.corningrobotics.enderbots.endercv.OpenCVPipeline;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
@@ -15,7 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MineralVisionContour extends OpenCVPipeline {
-    private final int imageWidth = 1080;
+    private int imageWidth = 480;
+    private int imageHeight = 854;
     private boolean showContours = false;
     // To keep it such that we don't have to instantiate a new Mat every call to processFrame,
     // we declare the Mats up here and reuse them. This is easier on the garbage collector.
@@ -36,6 +39,8 @@ public class MineralVisionContour extends OpenCVPipeline {
     // This is called every camera frame.
     @Override
     public Mat processFrame(Mat rgba, Mat gray) {
+        imageHeight = rgba.height();
+        imageWidth = rgba.width();
         // First, we change the colorspace from RGBA to HSV, which is usually better for color
         Imgproc.cvtColor(rgba, hsv, Imgproc.COLOR_RGB2HSV, 3);
         // Then, we threshold our hsv image so that we get a black/white binary image where white
@@ -49,7 +54,7 @@ public class MineralVisionContour extends OpenCVPipeline {
 
         Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT,
                 new Size(7, 7),
-                new Point(3d, 3d));
+                new Point(3, 3));
 
         Imgproc.erode(thresholded, thresholded, element);
         Imgproc.dilate(thresholded, thresholded, element);
@@ -70,45 +75,32 @@ public class MineralVisionContour extends OpenCVPipeline {
         return rgba;
     }
 
-    public int getGoldPos() {
+    public boolean getGoldPos() {
         try {
-            double max1 = 0;
-            double max2 = 0;
-            double x1 = 0;
-            double x2 = 0;
-            double area;
-            float[] radius = {};
-            double circleArea;
             MatOfPoint2f temp = new MatOfPoint2f();
-            Point center = new Point();
-            for (MatOfPoint contour : contours) {
-                area = Imgproc.contourArea(contour);
-                if (area > 500 && area < 1000) { //placeholder areas
+            for (int i = 1; i < contours.size(); i++) {
+                MatOfPoint contour = contours.get(i);
+                MatOfInt hull = new MatOfInt();
+                Imgproc.convexHull(contour, hull);
+                MatOfPoint hullCont = new MatOfPoint();
+                ArrayList<Point> hullPts = new ArrayList<>();
+                for (int j : hull.toArray()) {
+                    hullPts.add(new Point(contour.get(0, j)));
+                }
+                hullCont.fromList(hullPts);
+                double area = Imgproc.contourArea(hullCont);
+                if(area > 100 && area < 1000) { //placeholder areas
                     contour.convertTo(temp, CvType.CV_32F);
-                    Imgproc.minEnclosingCircle(temp, center, radius);
-                    circleArea = Math.PI * radius[0] * radius[0];
-                    if (area > 0.9 * circleArea * circleArea && area < 1.15 * circleArea * circleArea) {
-                        if (area > max1) {
-                            max2 = max1;
-                            x2 = x1;
-                            max1 = area;
-                            x1 = center.x;
-                        } else if (area > max2) {
-                            max2 = area;
-                            x2 = center.x;
-                        }
+                    Rect bounding = Imgproc.boundingRect(hullCont);
+                    if(area > 0.7 * bounding.area() && area < 1 * bounding.area()) {
+                        if(Math.abs(bounding.y + bounding.height / 2 - imageHeight) < 20)
+                        return true;
                     }
                 }
             }
-            if ((x2 + x1) / 2 < imageWidth / 3) {
-                return 2;
-            } else if ((x2 + x1) / 2 < imageWidth * 2 / 3) {
-                return 1;
-            } else {
-                return 0;
-            }
+            return false;
         } catch (NullPointerException e) {
-            return 3;
+            return false;
         }
     }
 }

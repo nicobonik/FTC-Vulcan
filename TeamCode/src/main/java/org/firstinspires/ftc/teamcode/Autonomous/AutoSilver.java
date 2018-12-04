@@ -1,30 +1,24 @@
 package org.firstinspires.ftc.teamcode.Autonomous;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.corningrobotics.enderbots.endercv.CameraViewDisplay;
-import org.firstinspires.ftc.teamcode.Subsystems.Arm;
-import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
-import org.firstinspires.ftc.teamcode.Subsystems.Intake;
-import org.firstinspires.ftc.teamcode.Subsystems.MineralVisionHough;
+import org.firstinspires.ftc.teamcode.Subsystems.MineralVisionContour;
 import org.firstinspires.ftc.teamcode.Subsystems.Robot;
 
 @Autonomous(name = "TestAutonomous", group="Auto")
 public class AutoSilver extends LinearOpMode {
     private Robot robot;
     private ElapsedTime Runtime = new ElapsedTime();
-    private MineralVisionHough houghVision;
+    private MineralVisionContour contourVision;
     private int[] goldPos = new int[3];
     public void runOpMode() {
-        robot = new Robot(hardwareMap);
-        houghVision = new MineralVisionHough();
-        houghVision.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
-        houghVision.setShowCountours(false);
-        houghVision.setTelem(telemetry);
+        robot = new Robot(hardwareMap, telemetry);
+        contourVision = new MineralVisionContour();
+        contourVision.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
+        contourVision.setShowCountours(false);
         //start on ground, init IMU, then pull up before match starts
         robot.drivetrain.setupIMU(); //wait to start IMU until robot has landed
         double startTime = getRuntime();
@@ -51,38 +45,37 @@ public class AutoSilver extends LinearOpMode {
         while(getRuntime() < startTime + 0.5) {}
         robot.arm.extend(0);
         //take video of sampling field, find most commonly detected gold position
-        houghVision.enable();
-        for(int i = 0; i < 10; i++) {
-            goldPos[houghVision.getGoldPos()]++;
-        }
-        houghVision.disable();
-        int max = 0;
-        int argmax = 3;
-        for(int i = 0; i < 2; i++) {
-            if(goldPos[i] > max) {
-                max = goldPos[i];
-                argmax = i;
+        robot.drivetrain.turn(50);
+        double heading = robot.drivetrain.heading();
+        contourVision.enable();
+        int goldCount = 0;
+        while(goldCount < 5 && Math.abs(robot.drivetrain.heading() - heading) < 100) {
+            if(contourVision.getGoldPos()) {
+                robot.drivetrain.slow(0.4);
+                goldCount++;
+            } else {
+                robot.drivetrain.slow(1.0);
             }
         }
+        contourVision.disable();
+
         //fold slides
         robot.arm.swing(false);
         //drive through gold position
-        robot.drivetrain.turn(45 * (argmax - 1));
-        robot.drivetrain.whileBusy();
         robot.drivetrain.driveEnc(6);
+        robot.drivetrain.whileBusy();
+        robot.drivetrain.driveEnc(-6);
         robot.drivetrain.whileBusy();
         //drive to depot
-        robot.drivetrain.turn(-90 * (argmax - 1));
+        robot.drivetrain.turn((int)(heading - robot.drivetrain.heading()));
         robot.drivetrain.whileBusy();
-        robot.drivetrain.driveEnc(6);
+        robot.drivetrain.turn(90);
         robot.drivetrain.whileBusy();
-        robot.drivetrain.turn(45 * (argmax - 1) + 90);
+        robot.drivetrain.driveEnc(24 * Math.sqrt(2));
         robot.drivetrain.whileBusy();
-        robot.drivetrain.driveEnc(12);
+        robot.drivetrain.turn(-45);
         robot.drivetrain.whileBusy();
-        robot.drivetrain.turn(45);
-        robot.drivetrain.whileBusy();
-        robot.drivetrain.driveEnc(36);
+        robot.drivetrain.driveEnc(60);
         robot.drivetrain.whileBusy();
         //drop team marker
         robot.intake.intake(-1);
@@ -91,8 +84,9 @@ public class AutoSilver extends LinearOpMode {
         //park
         robot.drivetrain.turn(180);
         robot.drivetrain.whileBusy();
-        robot.drivetrain.driveEnc(48);
+        robot.drivetrain.driveEnc(72);
         robot.drivetrain.whileBusy();
+
         robot.drivetrain.stop();
     }
 }

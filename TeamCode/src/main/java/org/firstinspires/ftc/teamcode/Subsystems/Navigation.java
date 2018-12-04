@@ -69,7 +69,7 @@ public class Navigation {
 
     }
 
-    //gets best path between nodes, backwards
+    //for each node, figures out neighbor node through which the best path passes to get to that node
     public ArrayList<Integer> aStar(int src, int dst) {
         ArrayList<Integer> closedSet = new ArrayList<>();
         ArrayList<Integer> openSet = new ArrayList<Integer>();
@@ -115,6 +115,7 @@ public class Navigation {
         return new ArrayList<>();
     }
 
+    //returns best path by node index
     private ArrayList<Integer> reconstructPath(ArrayList<Integer> cameFrom, int current) {
         ArrayList<Integer> totalPath = new ArrayList();
         totalPath.add(current);

@@ -9,38 +9,38 @@ import org.firstinspires.ftc.teamcode.Subsystems.MineralVisionHough;
 
 @Autonomous(name="VisionTest", group="Vision")
 public class VisionTest extends OpMode {
-    //private MineralVisionContour contourVision;
+    private MineralVisionContour contourVision;
     private MineralVisionHough houghVision;
-    //private boolean contour = false;
-    //private boolean hough = true;
+    private boolean contour = true;
+    private boolean hough = false;
     public void init() {
-        /*if(contour) {
+        if(contour) {
             contourVision = new MineralVisionContour();
             contourVision.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
             contourVision.setShowCountours(true);
             contourVision.enable();
-        } else if(hough) {*/
+        } else if(hough) {
             houghVision = new MineralVisionHough();
             houghVision.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
             houghVision.setShowCountours(true);
             houghVision.setTelem(telemetry);
             houghVision.enable();
-        //}
+        }
     }
 
     public void loop() {
-        //if(contour) {
-        //    telemetry.addData("GoldPos", contourVision.getGoldPos());
-        //} else if(hough) {
+        if(contour) {
+            telemetry.addData("GoldPos", contourVision.getGoldPos());
+        } else if(hough) {
             telemetry.addData("GoldPos", houghVision.getGoldPos());
-        //}
+        }
     }
 
     public void stop() {
-        //if(contour) {
-        //    contourVision.disable();
-        //} else if(hough) {
+        if(contour) {
+            contourVision.disable();
+        } else if(hough) {
             houghVision.disable();
-        //}
+        }
     }
 }

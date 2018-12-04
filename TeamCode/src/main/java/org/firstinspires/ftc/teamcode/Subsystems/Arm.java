@@ -1,9 +1,9 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
-import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.util.Range;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class Arm extends Subsystem {
     private final double ticksPerRevolution = 5264;
@@ -60,26 +60,13 @@ public class Arm extends Subsystem {
 
         swingPosition = 0;
         extendPosition = 0;
+        telemetryPackets = new LinkedHashMap<>();
     }
 
-    public void updateSubsystem() {
+    public LinkedHashMap<String, String> updateSubsystem() {
         if(swingPIDActive) {
             swingPID.maintainOnce(swingPosition, 2);
         } else {
-            /*if((Math.abs(arm[1].getCurrentPosition()) > ticksPerRevolution / 4 && arm[1].getPower() > 0) || (Math.abs(arm[1].getCurrentPosition()) < 0 && arm[1].getPower() < 0)) {
-                arm[0].setPower(0);
-                arm[1].setPower(0);
-            } else {
-                double pow = swingPower;
-                if(arm[1].getCurrentPosition() < 200) {
-                    pow *= arm[1].getCurrentPosition() / 200;
-                } else if(ticksPerRevolution / 4 - arm[1].getCurrentPosition() < 200) {
-                    pow *= (ticksPerRevolution / 4 - arm[1].getCurrentPosition()) / 200;
-                }
-                pow = (pow >= 0 ? 1 : -1) * Math.max(Math.abs(0.1 * swingPower), Math.abs(pow));
-                arm[0].setPower(pow);
-                arm[1].setPower(pow);
-            }*/
             arm[0].setPower(swingPower);
             arm[1].setPower(swingPower);
         }
@@ -88,6 +75,7 @@ public class Arm extends Subsystem {
         } else {
             extender.setPower(extendPower);
         }
+        return telemetryPackets;
     }
 
     public void swing(double speed) {

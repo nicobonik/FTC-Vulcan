@@ -1,15 +1,18 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
+import android.util.ArrayMap;
+
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class Drivetrain extends Subsystem {
     private static final double wheelCirc = Math.PI * 4;
@@ -20,7 +23,7 @@ public class Drivetrain extends Subsystem {
     private int driveTarget, driveMargin, turnTarget, turnMargin;
     private volatile boolean drivePIDActive, turnPIDActive;
     public static final double BASE_POWER = 0.9;
-    public double tempPower = BASE_POWER;
+    public double tempPower;
     public double rearMultiplier = 1.0;
     private DcMotor[] motors = new DcMotor[4];
     private BNO055IMU imu;
@@ -81,9 +84,10 @@ public class Drivetrain extends Subsystem {
         ly = 0;
         lx = 0;
         rx = 0;
+        telemetryPackets = new LinkedHashMap<>();
     }
 
-    public void updateSubsystem() {
+    public LinkedHashMap<String, String> updateSubsystem() {
         mecanumDrive(-ly, lx, rx, 0.8);
         if(drivePIDActive) {
             for(int i = 0; i < 4; i++) {
@@ -104,14 +108,19 @@ public class Drivetrain extends Subsystem {
         //
         double max = Math.max(Math.max(Math.max(Math.max(Math.abs(speeds[0]), Math.abs(speeds[1])), Math.abs(speeds[2])), Math.abs(speeds[3])), 1);
         for (int i = 0; i < 4; i++) {
-            motors[i].setPower(speeds[i] / max);
+            motors[i].setPower(tempPower * speeds[i] / max);
         }
+        return telemetryPackets;
     }
 
     public void setGamepadState(double ly, double lx, double rx) {
         this.ly = ly;
         this.lx = lx;
         this.rx = rx;
+    }
+
+    public void slow(double slow) {
+        tempPower = Math.min(slow, BASE_POWER);
     }
 
     /*public void setupGyro(ModernRoboticsI2cGyro gyr) {
@@ -126,8 +135,11 @@ public class Drivetrain extends Subsystem {
         parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
         parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
         parameters.loggingEnabled = false;
-
-        while (!imu.initialize(parameters) || !imu.isGyroCalibrated()) {}
+        if(imu.initialize(parameters)) {
+            while (!imu.isGyroCalibrated()) {}
+        } else {
+            imu.initialize(parameters);
+        }
     }
 
     public void arcadeDrive(double forward, double turn) {
@@ -173,7 +185,7 @@ public class Drivetrain extends Subsystem {
                 }
             }
             for (int i = 0; i < 4; i++) {
-                speeds[i] = (tempPower * multiplier * v[i]);
+                speeds[i] = (multiplier * v[i]);
             }
         }
         if(turn != 0) {
@@ -217,6 +229,10 @@ public class Drivetrain extends Subsystem {
         turnGyro((int)angle);
         driveEnc(distance);
     }*/
+
+    public int heading() {
+        return (int)imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+    }
 
     public String speeds() {
         StringBuilder speeds = new StringBuilder();

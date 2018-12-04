@@ -5,6 +5,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import java.util.LinkedHashMap;
+
 public class Intake extends Subsystem {
     private final double closePos = 1.0; //placeholders
     private final double openPos = 0.0;
@@ -20,9 +22,10 @@ public class Intake extends Subsystem {
         position = 0;
     }
 
-    public void updateSubsystem() {
+    public LinkedHashMap<String, String> updateSubsystem() {
         intake.setPower(power);
         door.setPosition((position * 0.4) + 0.3);
+        return telemetryPackets;
     }
 
     public void intake(double power) {

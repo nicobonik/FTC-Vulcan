@@ -8,70 +8,25 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
+import java.util.LinkedHashMap;
+
 import static org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity.TAG;
 
 public class Robot {
     public Drivetrain drivetrain;
     public Intake intake;
     public Arm arm;
-    public Subsystem[] subsystems;
-    public Runnable subsystemUpdater;
-    public HardwareMap hardwareMap;
-    public Telemetry telemetry;
-    private Thread subsystemUpdateThread;
-
-    public Robot(HardwareMap hwMap) {
-        hardwareMap = hwMap;
-        drivetrain = new Drivetrain(
-                hardwareMap.dcMotor.get("front_left"),
-                hardwareMap.dcMotor.get("front_right"),
-                hardwareMap.dcMotor.get("back_left"),
-                hardwareMap.dcMotor.get("back_right"),
-                hardwareMap.get(BNO055IMU.class, "imu")
-        );
-        arm = new Arm(
-                new DcMotor[] {hardwareMap.dcMotor.get("arm_left"), hardwareMap.dcMotor.get("arm_right")},
-                hardwareMap.dcMotor.get("extender")//,
-                //hardwareMap.analogInput.get("potent")
-        );
-        intake = new Intake(
-                hardwareMap.crservo.get("intake"),
-                hardwareMap.servo.get("door")
-        );
-        subsystems = new Subsystem[] {drivetrain, intake, arm};
-
-        /*subsystemUpdater = new Runnable() {
-            public void run() {
-                try {
-                    while (!Thread.currentThread().isInterrupted()) {
-                        //TelemetryPacket packet;
-                        for (Subsystem subsystem : subsystems) {
-                            if (subsystem != null) {
-                                subsystem.updateSubsystem();
-                            }
-                            //packet = subsystem.updateSubsystem();
-                        /*for (Listener listener : listeners) {
-                            listener.onPostUpdate();
-                        }*/
-                        /*while (telemetryPacketQueue.remainingCapacity() == 0) {
-
-                        }
-                        telemetryPacketQueue.add(packet);
-                        }
-                        Thread.sleep(1);
-                    }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-        };*/
-    }
+    private Subsystem[] subsystems;
+    private Runnable subsystemUpdater, telemetryUpdater;
+    private HardwareMap hardwareMap;
+    private Telemetry telemetry;
+    private Thread subsystemUpdateThread, telemetryUpdateThread;
+    private LinkedHashMap<String, String> telemetryPackets;
 
     public Robot(HardwareMap hwMap, Telemetry telem) {
         telemetry = telem;
+        telemetryPackets = new LinkedHashMap<>();
         hardwareMap = hwMap;
-        //telemetry.addData("drivetrain", "initializing");
-        //telemetry.update();
         drivetrain = new Drivetrain(
                 hardwareMap.dcMotor.get("front_left"),
                 hardwareMap.dcMotor.get("front_right"),
@@ -79,34 +34,40 @@ public class Robot {
                 hardwareMap.dcMotor.get("back_right"),
                 hardwareMap.get(BNO055IMU.class, "imu")
         );
-        //telemetry.addData("drivetrain", "initialized");
-        //telemetry.addData("arm", "initializing");
-        //telemetry.update();
         arm = new Arm(
             new DcMotor[] {hardwareMap.dcMotor.get("arm_left"), hardwareMap.dcMotor.get("arm_right")},
             hardwareMap.dcMotor.get("extender")//,
             //hardwareMap.analogInput.get("potent")
         );
-        //telemetry.addData("arm", "initialized");
-        //telemetry.addData("intake", "initializing");
-        //telemetry.update();
         intake = new Intake(
             hardwareMap.crservo.get("intake"),
             hardwareMap.servo.get("door")
         );
-        //telemetry.addData("intake", "initialized");
-        //telemetry.addData("runnable", "initializing");
-        //telemetry.update();
         subsystems = new Subsystem[] {drivetrain, intake, arm};
         subsystemUpdater = new Runnable() {
             public void run() {
                 try {
-                    Thread.sleep(200);
+                    Thread.sleep(100);
                     while (!Thread.currentThread().isInterrupted()) {
                         for (Subsystem subsystem : subsystems) {
                             if (subsystem != null) {
-                                subsystem.updateSubsystem();
+                                telemetryPackets.putAll(subsystem.updateSubsystem());
                             }
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    stop();
+                }
+            }
+        };
+        /*telemetryUpdater = new Runnable() {
+            public void run() {
+                try {
+                    Thread.sleep(100);
+                    while (!Thread.currentThread().isInterrupted()) {
+                        for (String key : telemetryPackets.keySet()) {
+                            telemetry.addData(key, telemetryPackets.get(key));
                         }
                     }
                 } catch (InterruptedException e) {
@@ -116,18 +77,19 @@ public class Robot {
                     stop();
                 }
             }
-        };
-        //telemetry.addData("runnable", "initialized");
-        //telemetry.update();
+        };*/
     }
 
     public void init() {
         subsystemUpdateThread = new Thread(subsystemUpdater);
         subsystemUpdateThread.start();
+        //telemetryUpdateThread = new Thread(telemetryUpdater);
+        //telemetryUpdateThread.start();
     }
 
     public void stop() {
         subsystemUpdateThread.interrupt();
+        //telemetryUpdateThread.interrupt();
         drivetrain.stop();
         arm.stop();
         intake.stop();
