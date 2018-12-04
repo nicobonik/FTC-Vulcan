@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.util.Range;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -65,10 +66,20 @@ public class Arm extends Subsystem {
 
     public LinkedHashMap<String, String> updateSubsystem() {
         if(swingPIDActive) {
-            swingPID.maintainOnce(swingPosition, 2);
+            swingPIDActive = swingPID.maintainOnce(swingPosition, 2);
         } else {
-            arm[0].setPower(swingPower);
-            arm[1].setPower(swingPower);
+            if((Math.abs(arm[1].getCurrentPosition()) > ticksPerRevolution / 4 && arm[1].getPower() > 0) || (Math.abs(arm[1].getCurrentPosition()) < 0 && arm[1].getPower() < 0)) {
+                arm[0].setPower(0);
+                arm[1].setPower(0);
+                swingPower = 0;
+            } else {
+                int distance = (int)Math.min(arm[1].getCurrentPosition(), (ticksPerRevolution / 4) - arm[1].getCurrentPosition());
+                double limit = Range.clip(distance / 200, 0.075, 1.0);
+                double pow = Range.clip(swingPower, -limit, limit);
+
+                arm[0].setPower(pow);
+                arm[1].setPower(pow);
+            }
         }
         if(extendPIDActive) {
             extendPID.maintainOnce(extendPosition, 2);
@@ -79,7 +90,9 @@ public class Arm extends Subsystem {
     }
 
     public void swing(double speed) {
-        swingPIDActive = false;
+        if(speed != 0) {
+            swingPIDActive = false;
+        }
         double power = (speed / 0.7) * (0.3 * Math.pow(speed, 6) + 0.4);
         swingPower += (power - swingPower) / 2;
     }
