@@ -23,6 +23,7 @@ public class Drivetrain extends Subsystem {
     private double ly, lx, rx;
     private int driveTarget, driveMargin, turnTarget, turnMargin;
     private volatile boolean drivePIDActive, turnPIDActive;
+    private boolean fieldCentric;
     public static final double BASE_POWER = 0.9;
     public double tempPower;
     public double rearMultiplier = 1.0;
@@ -175,10 +176,14 @@ public class Drivetrain extends Subsystem {
         }
     }
 
-    public void mecanumDrive(double forward, double strafe, double turn, double multiplier) {
+    private void mecanumDrive(double forward, double strafe, double turn, double multiplier) {
         if(!drivePIDActive) {
             double vd = Math.hypot((forward / 0.7) * (0.3 * Math.pow(forward, 6) + 0.4), (strafe / 0.7) * (0.3 * Math.pow(strafe, 6) + 0.4));
             double theta = Math.atan2(forward, strafe) - (Math.PI / 4);
+            if(fieldCentric) {
+                theta -= heading();
+            }
+            //todo: add field centric turning
             double[] v = {
                     vd * Math.sin(theta) + turn,
                     vd * Math.cos(theta) - turn,
@@ -229,6 +234,7 @@ public class Drivetrain extends Subsystem {
         turnPIDActive = true;
     }
 
+    //todo: if inverse of heading is closer, turn to it and just drive backwards
     public void driveTo(double x, double y) {
         double distance = Math.hypot((x - nav.x), (y - nav.y));
         double angle = Math.atan2(y - nav.y, x - nav.x);
