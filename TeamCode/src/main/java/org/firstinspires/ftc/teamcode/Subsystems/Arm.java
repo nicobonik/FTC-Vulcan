@@ -17,6 +17,7 @@ public class Arm extends Subsystem {
     private DcMotor extender;
     //private AnalogInput potentiometer;
     private PID extendPID, swingPID;
+    private PowerControl extendControl, swingControl;
     public Arm(DcMotor[] armMotors, DcMotor extend) {//, AnalogInput pot) {
         arm = armMotors;
         extender = extend;
@@ -39,25 +40,30 @@ public class Arm extends Subsystem {
 
         extender.setDirection(DcMotor.Direction.REVERSE);
 
-        extendPID = new PID(-1, 0, 0, 0, new PowerControl() {
+        extendControl = new PowerControl() {
             public void setPower(double power) {
                 extender.setPower(power);
             }
             public double getPosition() {
                 return extender.getCurrentPosition();
             }
-        });
+        };
 
-        swingPID = new PID(-1, 0, 0, 0, new PowerControl() {
+        extendPID = new PID(-1, 0, 0, 0, extendControl);
+
+        swingControl = new PowerControl() {
             public void setPower(double power) {
                 arm[0].setPower(power);
                 arm[1].setPower(power);
             }
+
             public double getPosition() {
                 return arm[1].getCurrentPosition() - arm[0].getCurrentPosition() / 2;
                 //return (potentiometer.getVoltage() / maxVoltage) * 270;
             }
-        });
+        };
+
+        swingPID = new PID(-1, 0, 0, 0, swingControl);
 
         swingPID.limitOutput(-0.1, 0.1);
 

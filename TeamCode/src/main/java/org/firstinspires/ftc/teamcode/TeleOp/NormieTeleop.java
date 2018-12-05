@@ -11,15 +11,10 @@ import org.firstinspires.ftc.teamcode.Subsystems.Subsystem;
 @TeleOp(name="NormieDrive", group="Drive")
 public class NormieTeleop extends OpMode {
     protected Robot robot;
-    private boolean lastY;
+    private boolean lastBump;
 
     public void init() {
-        telemetry.addData("robot", "initializing");
-        telemetry.update();
         robot = new Robot(hardwareMap, telemetry);
-        telemetry.addData("robot", "initialized");
-        telemetry.update();
-        gamepad1.setJoystickDeadzone(0.05f);
     }
 
     public void start() {
@@ -50,17 +45,17 @@ public class NormieTeleop extends OpMode {
         }//intake
         if(gamepad2.a) {
             robot.intake.intake(0.8);
-        } else if(gamepad1.b) {
+        } else if(gamepad2.b) {
             robot.intake.intake(-0.8);
         } else {
             robot.intake.intake(0);
         }
-        if(gamepad1.x) {
+        if(gamepad2.left_bumper) {
             robot.intake.door(true);
-        } else if(gamepad1.y && !lastY) {
+        } else if(gamepad2.right_bumper && !lastBump) {
             robot.intake.door(false);
         }
-        lastY = gamepad1.y;
+        lastBump = gamepad2.right_bumper;
         robot.drivetrain.setGamepadState(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
         telemetry.addData("loop", "completed");
     }
