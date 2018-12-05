@@ -18,13 +18,15 @@ public class PID {
     private boolean cyclic = false, limit = true;
     private ElapsedTime timer = new ElapsedTime();
     private PowerControl control;
-    public boolean busy = false;
     public PID(double kp, double ki, double kd, double b, PowerControl ctrl) {
         Kp = kp;
         Ki = ki;
         Kd = kd;
         bias = b;
         control = ctrl;
+        minPos = 0;
+        maxPos = 0;
+        cyclic = false;
     }
 
     public PID(double kp, double ki, double kd, double b, PowerControl ctrl, double min, double max) {
@@ -51,8 +53,8 @@ public class PID {
         lastTime = timer.time();
     }
 
-    private double getResponse(double currentValue, double target) {
-        double error = currentValue - target;
+    private double getResponse(double currentPosition, double target) {
+        double error = currentPosition - target;
         if(cyclic) {
             while(error > maxPos - minPos) {
                 error -= maxPos - minPos;
@@ -64,8 +66,10 @@ public class PID {
         //Proportional
         double response = (Kp * error);
         //Integral
-        integral += (error * (timer.time() - lastTime));
-        response += (Ki * integral);
+        if(Math.abs(lastPower) < maxPow || !limit) {
+            integral += (error * (timer.seconds() - lastTime));
+            response += (Ki * integral);
+        }
         //Derivative
         response += (Kd * (error - lastError) / (timer.time() - lastTime));
         //Bias

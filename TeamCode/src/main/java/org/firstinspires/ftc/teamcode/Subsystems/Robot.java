@@ -25,6 +25,11 @@ public class Robot {
 
     public Robot(HardwareMap hwMap, Telemetry telem) {
         telemetry = telem;
+<<<<<<< Updated upstream
+=======
+        telemetry.addData("constructor", "start");
+        telemetry.update();
+>>>>>>> Stashed changes
         telemetryPackets = new LinkedHashMap<>();
         hardwareMap = hwMap;
         drivetrain = new Drivetrain(
@@ -55,6 +60,8 @@ public class Robot {
                                 telemetryPackets.putAll(subsystem.updateSubsystem());
                             }
                         }
+                        telemetry.addData("running", true);
+                        telemetry.update();
                     }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();

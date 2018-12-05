@@ -59,30 +59,32 @@ public class Arm extends Subsystem {
             }
         });
 
+        swingPID.limitOutput(-0.1, 0.1);
+
         swingPosition = 0;
         extendPosition = 0;
         telemetryPackets = new LinkedHashMap<>();
     }
 
     public LinkedHashMap<String, String> updateSubsystem() {
-        if(swingPIDActive) {
+        /*if(swingPIDActive) {
             swingPIDActive = swingPID.maintainOnce(swingPosition, 2);
-        } else {
+        } else {*/
             if((Math.abs(arm[1].getCurrentPosition()) > ticksPerRevolution / 4 && arm[1].getPower() > 0) || (Math.abs(arm[1].getCurrentPosition()) < 0 && arm[1].getPower() < 0)) {
                 arm[0].setPower(0);
                 arm[1].setPower(0);
                 swingPower = 0;
             } else {
                 int distance = (int)Math.min(arm[1].getCurrentPosition(), (ticksPerRevolution / 4) - arm[1].getCurrentPosition());
-                double limit = Range.clip(distance / 200, 0.075, 1.0);
+                double limit = Range.clip((distance / 400d), 0.15, 1.0);
                 double pow = Range.clip(swingPower, -limit, limit);
 
                 arm[0].setPower(pow);
                 arm[1].setPower(pow);
             }
-        }
+        //}
         if(extendPIDActive) {
-            extendPID.maintainOnce(extendPosition, 2);
+            extendPIDActive = extendPID.maintainOnce(extendPosition, 2);
         } else {
             extender.setPower(extendPower);
         }
@@ -118,7 +120,7 @@ public class Arm extends Subsystem {
     }
 
     public void whileBusy() {
-        while(extendPID.busy || swingPID.busy) {}
+        while(extendPIDActive || swingPIDActive) {}
     }
 
     public void stop() {
