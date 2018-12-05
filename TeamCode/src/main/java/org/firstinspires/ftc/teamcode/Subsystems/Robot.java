@@ -52,8 +52,7 @@ public class Robot {
                     while (!Thread.currentThread().isInterrupted()) {
                         for (Subsystem subsystem : subsystems) {
                             if (subsystem != null) {
-                                //telemetryPackets.putAll(subsystem.updateSubsystem());
-                                subsystem.updateSubsystem();
+                                telemetryPackets.putAll(subsystem.updateSubsystem());
                             }
                         }
                     }
@@ -66,14 +65,10 @@ public class Robot {
     }
 
     public void init() {
-        telemetry.addData("init", "start");
-        telemetry.update();
         subsystemUpdateThread = new Thread(subsystemUpdater);
         subsystemUpdateThread.start();
         //telemetryUpdateThread = new Thread(telemetryUpdater);
         //telemetryUpdateThread.start();
-        telemetry.addData("thread", "started");
-        telemetry.update();
     }
 
     public void stop() {

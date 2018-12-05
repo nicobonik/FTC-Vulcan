@@ -13,7 +13,6 @@ public class PID {
     private double integral = 0;
     private double lastError = 0;
     private double lastTime = 0;
-    private double lastPower = 0;
     private double bias = 0;
     private double minPos, maxPos, minPow = -1.0, maxPow = 1.0;
     private boolean cyclic = false, limit = true;
@@ -49,35 +48,29 @@ public class PID {
         integral = 0;
         lastError = 0;
         timer.reset();
-        lastTime = timer.seconds();
+        lastTime = timer.time();
     }
 
     private double getResponse(double currentValue, double target) {
         double error = currentValue - target;
         if(cyclic) {
-            while(error > maxPos) {
+            while(error > maxPos - minPos) {
                 error -= maxPos - minPos;
             }
-            while(error < minPos) {
+            while(error < minPos - maxPos) {
                 error += maxPos - minPos;
             }
         }
         //Proportional
         double response = (Kp * error);
         //Integral
-        if(limit && Math.abs(lastPower) == maxPow) {
-            integral += (error * (timer.seconds() - lastTime));
-            response += (Ki * integral);
-        }
+        integral += (error * (timer.time() - lastTime));
+        response += (Ki * integral);
         //Derivative
-        response += (Kd * (error - lastError) / (timer.seconds() - lastTime));
+        response += (Kd * (error - lastError) / (timer.time() - lastTime));
         //Bias
-        //response = Math.signum(response) * Math.max(bias, Math.abs(response));
+        response = Math.signum(response) * Math.max(bias, Math.abs(response));
         lastError = error;
-        if(limit) {
-            response = Range.clip(response, minPow, maxPow);
-        }
-        lastPower = response;
         return response;
     }
 
@@ -96,7 +89,11 @@ public class PID {
     public boolean maintainOnce(double target, double margin) {
         if (Math.abs(control.getPosition() - target) > margin) {
             double response = getResponse(control.getPosition(), target);
-            control.setPower(response);
+            if(limit) {
+                control.setPower(Range.clip(response, minPow, maxPow));
+            } else {
+                control.setPower(response);
+            }
             return true;
         }
         return false;
