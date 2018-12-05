@@ -12,6 +12,7 @@ public class PID {
     private double Kp, Ki, Kd;
     private double integral = 0;
     private double lastError = 0;
+    private double lastPower = 0;
     private double lastTime = 0;
     private double bias = 0;
     private double minPos, maxPos, minPow = -1.0, maxPow = 1.0;
@@ -75,6 +76,7 @@ public class PID {
         //Bias
         response = Math.signum(response) * Math.max(bias, Math.abs(response));
         lastError = error;
+        lastPower = response;
         return response;
     }
 

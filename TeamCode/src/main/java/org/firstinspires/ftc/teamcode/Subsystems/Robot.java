@@ -25,11 +25,6 @@ public class Robot {
 
     public Robot(HardwareMap hwMap, Telemetry telem) {
         telemetry = telem;
-<<<<<<< Updated upstream
-=======
-        telemetry.addData("constructor", "start");
-        telemetry.update();
->>>>>>> Stashed changes
         telemetryPackets = new LinkedHashMap<>();
         hardwareMap = hwMap;
         drivetrain = new Drivetrain(
