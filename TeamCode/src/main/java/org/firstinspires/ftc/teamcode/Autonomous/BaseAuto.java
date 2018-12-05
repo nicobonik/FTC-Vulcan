@@ -26,20 +26,14 @@ public class BaseAuto extends LinearOpMode {
         waitForStart();
         robot.drivetrain.driveEnc(6);
         while(robot.drivetrain.isBusy() && opModeIsActive()) {
-            telemetry.addData("target", robot.drivetrain.driveTarget);
             telemetry.addData("speed", robot.drivetrain.speeds());
-            telemetry.addData("position", robot.drivetrain.getPosition());
-            telemetry.addData("error", robot.drivetrain.getPosition() - robot.drivetrain.driveTarget);
             telemetry.update();
         }
-        telemetry.addData("active", false);
         telemetry.update();
         //robot.drivetrain.turn(90);
         //robot.drivetrain.turn(-90);
         robot.drivetrain.driveEnc(-6);
         while(robot.drivetrain.isBusy() && opModeIsActive()) {
-            telemetry.addData("active", false);
-            telemetry.addData("target", robot.drivetrain.driveTarget);
             telemetry.addData("speed", robot.drivetrain.speeds());
             telemetry.update();
         }
