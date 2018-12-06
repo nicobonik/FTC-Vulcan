@@ -11,9 +11,7 @@ import org.firstinspires.ftc.teamcode.Subsystems.Subsystem;
 @TeleOp(name="NormieDrive", group="Drive")
 public class NormieTeleop extends OpMode {
     protected Robot robot;
-    private boolean lastTrig;
-    private boolean lastIntake;
-    private boolean lastB;
+    private boolean lastTrig, lastA, lastB, lastUp, lastDown;
 
     public void init() {
         robot = new Robot(hardwareMap, telemetry);
@@ -22,6 +20,10 @@ public class NormieTeleop extends OpMode {
     public void start() {
         robot.init();
         robot.drivetrain.setupIMU();
+        lastTrig = false;
+        lastA = false;
+        lastB = false;
+        lastUp = false;
     }
 
     public void loop() {
@@ -43,13 +45,21 @@ public class NormieTeleop extends OpMode {
             robot.arm.swing(false);
         } else {
             robot.arm.swing(scale(-gamepad2.left_stick_y));
+        }
+        if(gamepad2.dpad_up) {
+            robot.arm.extend(true);
+        } else if (gamepad2.dpad_down) {
+            robot.arm.extend(false);
+        } else {
             robot.arm.extend(scale(-gamepad2.right_stick_y));
-        }//intake
+        }
+
+        //intake
         if(gamepad2.b) {
             robot.intake.intake(-0.8);
         } else if(lastB) {
             robot.intake.intake(0);
-        } else if(gamepad2.a && !lastIntake) {
+        } else if(gamepad2.a && !lastA) {
             robot.intake.toggleIntake();
         }
         if(gamepad2.left_bumper) {
@@ -58,6 +68,10 @@ public class NormieTeleop extends OpMode {
             robot.intake.door(false);
         }
         lastTrig = gamepad2.right_trigger > 0.2;
+        lastA = gamepad2.a;
+        lastB = gamepad2.b;
+        lastUp = gamepad2.dpad_up;
+        lastDown = gamepad2.dpad_down;
         robot.drivetrain.mecanumDrive(scale(gamepad1.left_stick_y), scale(gamepad1.left_stick_x), scale(gamepad1.right_stick_x), 0.8);
         telemetry.addData("loop", "completed");
     }
