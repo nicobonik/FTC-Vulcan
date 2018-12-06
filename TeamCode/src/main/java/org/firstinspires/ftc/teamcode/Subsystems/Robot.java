@@ -4,7 +4,6 @@ import android.util.Log;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -29,16 +28,16 @@ public class Robot {
         telemetryPackets = new LinkedHashMap<>();
         hardwareMap = hwMap;
         drivetrain = new Drivetrain(
-            (DcMotorEx)hardwareMap.dcMotor.get("front_left"),
-            (DcMotorEx)hardwareMap.dcMotor.get("front_right"),
-            (DcMotorEx)hardwareMap.dcMotor.get("back_left"),
-            (DcMotorEx)hardwareMap.dcMotor.get("back_right"),
+            hardwareMap.dcMotor.get("front_left"),
+            hardwareMap.dcMotor.get("front_right"),
+            hardwareMap.dcMotor.get("back_left"),
+            hardwareMap.dcMotor.get("back_right"),
             hardwareMap.get(BNO055IMU.class, "imu")//,
             //hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName())
         );
         arm = new Arm(
-            new DcMotorEx[] {(DcMotorEx)hardwareMap.dcMotor.get("arm_left"), (DcMotorEx)hardwareMap.dcMotor.get("arm_right")},
-                (DcMotorEx)hardwareMap.dcMotor.get("extender")//,
+            new DcMotor[] {hardwareMap.dcMotor.get("arm_left"), hardwareMap.dcMotor.get("arm_right")},
+            hardwareMap.dcMotor.get("extender")//,
             //hardwareMap.analogInput.get("potent")
         );
         intake = new Intake(

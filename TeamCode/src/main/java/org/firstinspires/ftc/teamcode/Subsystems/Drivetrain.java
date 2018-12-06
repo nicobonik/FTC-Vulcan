@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode.Subsystems;
 import android.util.ArrayMap;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -26,14 +26,14 @@ public class Drivetrain extends Subsystem {
     private boolean fieldCentric;
     public static final double BASE_POWER = 0.9;
     public double tempPower;
-    private DcMotorEx[] motors = new DcMotorEx[4];
+    private DcMotor[] motors = new DcMotor[4];
     private BNO055IMU imu;
     private BNO055IMU.Parameters parameters;
     //private Navigation nav;
     public PID drivePID, turnPID;
     private PowerControl driveControl, turnControl;
 
-    public Drivetrain(DcMotorEx frontLeft, DcMotorEx frontRight, DcMotorEx backLeft, DcMotorEx backRight, BNO055IMU IMU) {
+    public Drivetrain(DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight, BNO055IMU IMU) {
         motors[0] = frontLeft;
         motors[1] = frontRight;
         motors[2] = backLeft;
@@ -41,14 +41,14 @@ public class Drivetrain extends Subsystem {
         imu = IMU;
         //nav = new Navigation(imu, cameraId);
 
-        setM(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        setM(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        setZeroP(DcMotorEx.ZeroPowerBehavior.FLOAT);
+        setM(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setM(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        setZeroP(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        motors[0].setDirection(DcMotorEx.Direction.FORWARD);
-        motors[1].setDirection(DcMotorEx.Direction.REVERSE);
-        motors[2].setDirection(DcMotorEx.Direction.REVERSE);
-        motors[3].setDirection(DcMotorEx.Direction.FORWARD); // should be 1, 3 reversed, idk what's up with electrical
+        motors[0].setDirection(DcMotor.Direction.FORWARD);
+        motors[1].setDirection(DcMotor.Direction.REVERSE);
+        motors[2].setDirection(DcMotor.Direction.REVERSE);
+        motors[3].setDirection(DcMotor.Direction.FORWARD); // should be 1, 3 reversed, idk what's up with electrical
 
         driveControl = new PowerControl() {
             public void setPower(double power) {
@@ -106,6 +106,8 @@ public class Drivetrain extends Subsystem {
                 speeds[i] = 0;
             }
             drivePIDActive = drivePID.maintainOnce(driveTarget, driveMargin);
+        } else {
+            mecanumDrive(-ly, lx, rx, 0.8);
         }
         /*if(turnPIDActive) {
             turnPIDActive = turnPID.maintainOnce(turnTarget, turnMargin);
@@ -123,6 +125,12 @@ public class Drivetrain extends Subsystem {
             motors[i].setPower(tempPower * speeds[i] / max);
         }
         return telemetryPackets;
+    }
+
+    public void setGamepadState(double ly, double lx, double rx) {
+        this.ly = ly;
+        this.lx = lx;
+        this.rx = rx;
     }
 
     public void slow(double slow) {
@@ -151,7 +159,7 @@ public class Drivetrain extends Subsystem {
     public void arcadeDrive(double forward, double turn) {
         if(!drivePIDActive) {
             double turn2 = turnMult * tempPower * (forward <= 0 ? 1 : -1) * turn;
-            double forward2 = tempPower * forward;
+            double forward2 = tempPower * (forward / 0.7) * (0.3 * Math.pow(forward, 6) + 0.4);
             double v[] = {forward2 + turn2, //fl
                     forward2 - turn2, //fr
                     forward2 + turn2, //bl
@@ -177,7 +185,7 @@ public class Drivetrain extends Subsystem {
 
     public void mecanumDrive(double forward, double strafe, double turn, double multiplier) {
         if(!drivePIDActive) {
-            double vd = Math.hypot(forward, strafe);
+            double vd = Math.hypot((forward / 0.7) * (0.3 * Math.pow(forward, 6) + 0.4), (strafe / 0.7) * (0.3 * Math.pow(strafe, 6) + 0.4));
             double theta = Math.atan2(forward, strafe) - (Math.PI / 4);
             double[] v = {
                     vd * Math.sin(theta) + turn,
@@ -208,19 +216,19 @@ public class Drivetrain extends Subsystem {
         drivePIDActive = false;
         ElapsedTime time = new ElapsedTime();
         time.reset();
-        setM(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        setM(DcMotor.RunMode.RUN_USING_ENCODER);
         arcadeDrive(forward, turn);
         while(time.time() < seconds) {}
         stop();
     }
 
     public void driveEnc(double inches) {
-        /*setM(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        setM(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        /*setM(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setM(DcMotor.RunMode.RUN_USING_ENCODER);
         driveTarget = (int)(inches * ticksPerInch);
         drivePID.reset();
         drivePIDActive = true;*/
-        setM(DcMotorEx.RunMode.RUN_TO_POSITION);
+        setM(DcMotor.RunMode.RUN_TO_POSITION);
         for(int i = 0; i < 4; i++) {
             motors[i].setTargetPosition((i < 2 ? 1 : -1) * (int)(inches * ticksPerInch));
             motors[i].setPower(0.6);
@@ -228,14 +236,14 @@ public class Drivetrain extends Subsystem {
     }
 
     public void turn(int degrees) {
-        setM(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        setM(DcMotor.RunMode.RUN_USING_ENCODER);
         turnTarget = (int)imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle + degrees;
         turnPID.reset();
         turnPIDActive = true;
     }
 
     public void turnEnc(int degrees) {
-        setM(DcMotorEx.RunMode.RUN_TO_POSITION);
+        setM(DcMotor.RunMode.RUN_TO_POSITION);
         for(int i = 0; i < 4; i++) {
             motors[i].setTargetPosition((int)(degrees / 360 * 17 * Math.PI * ticksPerInch));
             motors[i].setPower(0.6);
@@ -243,7 +251,7 @@ public class Drivetrain extends Subsystem {
     }
 
     public void turn(double power) {
-        setM(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        setM(DcMotor.RunMode.RUN_USING_ENCODER);
         for(int i = 0; i < 2; i++) {
             motors[i].setPower(power);
         }
@@ -283,7 +291,7 @@ public class Drivetrain extends Subsystem {
 
     public String speeds() {
         StringBuilder speeds = new StringBuilder();
-        for (DcMotorEx motor : motors) {
+        for (DcMotor motor : motors) {
             speeds.append(motor.getPower()).append(" ");
         }
         return speeds.toString();
@@ -299,24 +307,24 @@ public class Drivetrain extends Subsystem {
         drivePIDActive = false;
         turnPIDActive = false;
         speeds(new double[] {0, 0, 0, 0});
-        setM(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        setM(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
-    public void setZeroP(DcMotorEx.ZeroPowerBehavior behavior) {
+    public void setZeroP(DcMotor.ZeroPowerBehavior behavior) {
         for (int i = 0; i < 4; i++) {
             motors[i].setZeroPowerBehavior(behavior);
         }
     }
 
-    private void setM(DcMotorEx.RunMode mode) {
+    private void setM(DcMotor.RunMode mode) {
         for (int motor = 0; motor < 4; motor++) {
             motors[motor].setMode(mode);
         }
     }
 
     /*private boolean busy() {
-        for (DcMotorEx motor: motors) {
-            if (motor.getMode() == DcMotorEx.RunMode.RUN_TO_POSITION && motor.isBusy()) {
+        for (DcMotor motor: motors) {
+            if (motor.getMode() == DcMotor.RunMode.RUN_TO_POSITION && motor.isBusy()) {
                 return true;
             }
         }
