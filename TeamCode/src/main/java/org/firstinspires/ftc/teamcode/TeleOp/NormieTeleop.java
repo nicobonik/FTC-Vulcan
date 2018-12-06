@@ -11,7 +11,9 @@ import org.firstinspires.ftc.teamcode.Subsystems.Subsystem;
 @TeleOp(name="NormieDrive", group="Drive")
 public class NormieTeleop extends OpMode {
     protected Robot robot;
-    private boolean lastBump;
+    private boolean lastTrig;
+    private boolean lastIntake;
+    private boolean lastB;
 
     public void init() {
         robot = new Robot(hardwareMap, telemetry);
@@ -43,19 +45,19 @@ public class NormieTeleop extends OpMode {
             robot.arm.swing(scale(-gamepad2.left_stick_y));
             robot.arm.extend(scale(-gamepad2.right_stick_y));
         }//intake
-        if(gamepad2.a) {
-            robot.intake.intake(0.8);
-        } else if(gamepad2.b) {
+        if(gamepad2.b) {
             robot.intake.intake(-0.8);
-        } else {
+        } else if(lastB) {
             robot.intake.intake(0);
+        } else if(gamepad2.a && !lastIntake) {
+            robot.intake.toggleIntake();
         }
         if(gamepad2.left_bumper) {
             robot.intake.door(true);
-        } else if(gamepad2.right_bumper && !lastBump) {
+        } else if(gamepad2.right_trigger > 0.2 && !lastTrig) {
             robot.intake.door(false);
         }
-        lastBump = gamepad2.right_bumper;
+        lastTrig = gamepad2.right_trigger > 0.2;
         robot.drivetrain.mecanumDrive(scale(gamepad1.left_stick_y), scale(gamepad1.left_stick_x), scale(gamepad1.right_stick_x), 0.8);
         telemetry.addData("loop", "completed");
     }

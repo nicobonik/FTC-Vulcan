@@ -12,9 +12,10 @@ public class Intake extends Subsystem {
     private volatile double power;
     private CRServo intake;
     private Servo door;
-    private double[] positions = {0.3, 0.5, 0.9};
+    private double[] positions = {0.3, 0.55, 0.9};
     public Intake(CRServo in, Servo dr) {
         intake = in;
+        in.setDirection(DcMotorSimple.Direction.REVERSE);
         door = dr;
         power = 0;
         position = 0;
@@ -27,6 +28,14 @@ public class Intake extends Subsystem {
     }
 
     //todo: make intake toggle
+    public void toggleIntake() {
+        if(power != 0) {
+            power = 0;
+        } else {
+            power = 0.8;
+        }
+    }
+
     public void intake(double power) {
         this.power = power;
     }
