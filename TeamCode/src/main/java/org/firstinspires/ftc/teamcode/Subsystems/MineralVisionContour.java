@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
 import org.corningrobotics.enderbots.endercv.OpenCVPipeline;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -20,13 +21,18 @@ public class MineralVisionContour extends OpenCVPipeline {
     private int imageWidth = 480;
     private int imageHeight = 854;
     private boolean showContours = false;
+    private Telemetry telemetry;
     // To keep it such that we don't have to instantiate a new Mat every call to processFrame,
     // we declare the Mats up here and reuse them. This is easier on the garbage collector.
-    private Mat hsv = new Mat();
+    private Mat hls = new Mat();
     private Mat thresholded = new Mat();
 
     // this is just here so we can expose it later thru getContours.
     private List<MatOfPoint> contours = new ArrayList<>();
+
+    public void setTelemetry(Telemetry telem) {
+        telemetry = telem;
+    }
 
     public synchronized void setShowCountours(boolean enabled) {
         showContours = enabled;
@@ -42,12 +48,11 @@ public class MineralVisionContour extends OpenCVPipeline {
         imageHeight = rgba.height();
         imageWidth = rgba.width();
         // First, we change the colorspace from RGBA to HSV, which is usually better for color
-        Imgproc.cvtColor(rgba, hsv, Imgproc.COLOR_RGB2HSV, 3);
+        Imgproc.cvtColor(rgba, hls, Imgproc.COLOR_RGB2HLS, 3);
         // Then, we threshold our hsv image so that we get a black/white binary image where white
         // is the blues listed in the specified range of values
         // you can use a program like WPILib GRIP to find these values, or just play around.
-        Core.inRange(hsv, new Scalar(0, 0, 180), new Scalar(0, 80, 255), thresholded);
-
+        Core.inRange(hls, new Scalar(10, 90, 100), new Scalar(40, 180, 220), thresholded);
         // we blur the thresholded image to remove noise
         // there are other types of blur like box blur or gaussian which can be explored.
         //Imgproc.blur(thresholded, thresholded, new Size(3, 3));
@@ -80,18 +85,21 @@ public class MineralVisionContour extends OpenCVPipeline {
             MatOfPoint2f temp = new MatOfPoint2f();
             for (int i = 1; i < contours.size(); i++) {
                 MatOfPoint contour = contours.get(i);
-                MatOfInt hull = new MatOfInt();
-                Imgproc.convexHull(contour, hull);
-                MatOfPoint hullCont = new MatOfPoint();
-                ArrayList<Point> hullPts = new ArrayList<>();
-                for (int j : hull.toArray()) {
-                    hullPts.add(new Point(contour.get(0, j)));
-                }
-                hullCont.fromList(hullPts);
-                double area = Imgproc.contourArea(hullCont);
+
+                //MatOfInt hull = new MatOfInt();
+                //Imgproc.convexHull(contour, hull);
+                //MatOfPoint hullCont = new MatOfPoint();
+                //ArrayList<Point> hullPts = new ArrayList<>();
+                //for (int j : hull.toArray()) {
+                //    hullPts.add(new Point(contour.get(0, j)));
+                //}
+                //hullCont.fromList(hullPts);
+                Rect bounding = Imgproc.boundingRect(contour);
+                telemetry.addData("x", bounding.x);
+                telemetry.addData("y", bounding.y);
+                double area = Imgproc.contourArea(contour);
                 if(area > 100 && area < 1000) { //placeholder areas
                     contour.convertTo(temp, CvType.CV_32F);
-                    Rect bounding = Imgproc.boundingRect(hullCont);
                     if(area > 0.7 * bounding.area() && area < 1 * bounding.area()) {
                         if(Math.abs(bounding.y + bounding.height / 2 - imageHeight) < 20)
                         return true;

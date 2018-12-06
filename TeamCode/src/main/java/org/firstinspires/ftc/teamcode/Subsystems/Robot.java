@@ -32,8 +32,8 @@ public class Robot {
             hardwareMap.dcMotor.get("front_right"),
             hardwareMap.dcMotor.get("back_left"),
             hardwareMap.dcMotor.get("back_right"),
-            hardwareMap.get(BNO055IMU.class, "imu"),
-            hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName())
+            hardwareMap.get(BNO055IMU.class, "imu")//,
+            //hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName())
         );
         arm = new Arm(
             new DcMotor[] {hardwareMap.dcMotor.get("arm_left"), hardwareMap.dcMotor.get("arm_right")},
@@ -49,10 +49,11 @@ public class Robot {
             public void run() {
                 try {
                     Thread.sleep(100);
-                    while (!Thread.currentThread().isInterrupted()) {
+                    while (!Thread.interrupted()) {
                         for (Subsystem subsystem : subsystems) {
                             if (subsystem != null) {
-                                telemetryPackets.putAll(subsystem.updateSubsystem());
+                                //telemetryPackets.putAll(subsystem.updateSubsystem());
+                                subsystem.updateSubsystem();
                             }
                         }
                         telemetry.addData("running", true);

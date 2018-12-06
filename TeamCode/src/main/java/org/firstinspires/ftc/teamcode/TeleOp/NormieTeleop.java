@@ -40,8 +40,8 @@ public class NormieTeleop extends OpMode {
         } else if (gamepad2.x) {
             robot.arm.swing(false);
         } else {
-            robot.arm.swing(-gamepad2.left_stick_y);
-            robot.arm.extend(-gamepad2.right_stick_y);
+            robot.arm.swing(scale(-gamepad2.left_stick_y));
+            robot.arm.extend(scale(-gamepad2.right_stick_y));
         }//intake
         if(gamepad2.a) {
             robot.intake.intake(0.8);
@@ -56,11 +56,15 @@ public class NormieTeleop extends OpMode {
             robot.intake.door(false);
         }
         lastBump = gamepad2.right_bumper;
-        robot.drivetrain.setGamepadState(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
+        robot.drivetrain.mecanumDrive(scale(gamepad1.left_stick_y), scale(gamepad1.left_stick_x), scale(gamepad1.right_stick_x), 0.8);
         telemetry.addData("loop", "completed");
     }
 
     public void stop() {
         robot.stop();
+    }
+
+    private double scale(double input) {
+        return (input / 0.7) * (0.3 * Math.pow(input, 6) + 0.4);
     }
 }

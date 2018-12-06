@@ -10,33 +10,37 @@ import org.corningrobotics.enderbots.endercv.CameraViewDisplay;
 import org.firstinspires.ftc.teamcode.Subsystems.Arm;
 import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
+import org.firstinspires.ftc.teamcode.Subsystems.MineralVisionContour;
 import org.firstinspires.ftc.teamcode.Subsystems.MineralVisionHough;
 import org.firstinspires.ftc.teamcode.Subsystems.Robot;
 
 @Autonomous(name = "TestAuto", group="Auto")
 public class BaseAuto extends LinearOpMode {
     private Robot robot;
+    private MineralVisionContour vis;
     public void runOpMode() {
-        /*DcMotor fl = hardwareMap.dcMotor.get("front_left");
-        DcMotor fr = hardwareMap.dcMotor.get("front_right");
-        DcMotor bl = hardwareMap.dcMotor.get("back_left");
-        DcMotor br = hardwareMap.dcMotor.get("back_right");*/
+        vis = new MineralVisionContour();
+        vis.init(hardwareMap.appContext, CameraViewDisplay.getInstance(), 1);
+        vis.setShowCountours(true);
+        vis.enable();
         robot = new Robot(hardwareMap, telemetry);
+        robot.drivetrain.setupIMU();
         robot.init();
         waitForStart();
         robot.drivetrain.driveEnc(6);
-        while(robot.drivetrain.isBusy() && opModeIsActive()) {
-            telemetry.addData("speed", robot.drivetrain.speeds());
+        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
+        sleep(2000);
+        robot.drivetrain.turnEnc(50);
+        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
+        while (!vis.getGoldPos() && opModeIsActive()) {
+            telemetry.addData("gold", "not found");
             telemetry.update();
         }
+        telemetry.addData("gold", "found");
         telemetry.update();
-        //robot.drivetrain.turn(90);
-        //robot.drivetrain.turn(-90);
-        robot.drivetrain.driveEnc(-6);
-        while(robot.drivetrain.isBusy() && opModeIsActive()) {
-            telemetry.addData("speed", robot.drivetrain.speeds());
-            telemetry.update();
-        }
+        vis.disable();
+        robot.drivetrain.driveEnc(6);
+        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
         robot.stop();
     }
 }

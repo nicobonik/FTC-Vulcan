@@ -10,12 +10,12 @@ public class NavigationTest extends LinearOpMode {
     public void runOpMode() {
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
 
-        Vision nav = new Vision(cameraMonitorViewId, telemetry);
+        /*Vision nav = new Vision(cameraMonitorViewId, telemetry);
         nav.setActiveVuforia(false);
         nav.setActiveCv(true);
         nav.init();
         sleep(10000);
         while(opModeIsActive()) {}
-        nav.stop();
+        nav.stop();*/
     }
 }

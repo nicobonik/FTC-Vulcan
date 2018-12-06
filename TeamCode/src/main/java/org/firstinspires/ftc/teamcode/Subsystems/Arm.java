@@ -7,7 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class Arm extends Subsystem {
-    private final double ticksPerRevolution = 5264;
+    private final double ticksPerRevolution = 5264 * 1.75;
     private final double revsPerInch = 10; //placeholder
     private final double maximumExtension = 10000; //placeholder
     //private final double maxVoltage;
@@ -63,9 +63,9 @@ public class Arm extends Subsystem {
             }
         };
 
-        swingPID = new PID(-1, 0, 0, 0, swingControl);
+        swingPID = new PID(-0.005, -0.003, 0.005, 0, swingControl);
 
-        swingPID.limitOutput(-0.1, 0.1);
+        swingPID.limitOutput(-1.0, 1.0);
 
         swingPosition = 0;
         extendPosition = 0;
@@ -73,9 +73,9 @@ public class Arm extends Subsystem {
     }
 
     public LinkedHashMap<String, String> updateSubsystem() {
-        /*if(swingPIDActive) {
+        if(swingPIDActive) {
             swingPIDActive = swingPID.maintainOnce(swingPosition, 2);
-        } else {*/
+        } else {
             if((Math.abs(arm[1].getCurrentPosition()) > ticksPerRevolution / 4 && arm[1].getPower() > 0) || (Math.abs(arm[1].getCurrentPosition()) < 0 && arm[1].getPower() < 0)) {
                 arm[0].setPower(0);
                 arm[1].setPower(0);
@@ -88,7 +88,7 @@ public class Arm extends Subsystem {
                 arm[0].setPower(pow);
                 arm[1].setPower(pow);
             }
-        //}
+        }
         if(extendPIDActive) {
             extendPIDActive = extendPID.maintainOnce(extendPosition, 2);
         } else {
@@ -102,7 +102,7 @@ public class Arm extends Subsystem {
             swingPIDActive = false;
         }
         double power = (speed / 0.7) * (0.3 * Math.pow(speed, 6) + 0.4);
-        swingPower += (power - swingPower) / 2;
+        swingPower = power;
     }
 
     public void swing(boolean up) {
