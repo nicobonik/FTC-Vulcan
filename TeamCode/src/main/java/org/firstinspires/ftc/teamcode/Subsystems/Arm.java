@@ -81,8 +81,17 @@ public class Arm extends Subsystem {
                 arm[1].setPower(0);
                 swingPower = 0;
             } else {
-                int distance = (int)Math.min(arm[1].getCurrentPosition(), (ticksPerRevolution / 4) - arm[1].getCurrentPosition());
-                double limit = Range.clip((distance / 400d), 0.15, 1.0);
+                boolean movingOut;
+                int upperDist = (int)(ticksPerRevolution / 4) - arm[1].getCurrentPosition();
+                int lowerDist = arm[1].getCurrentPosition();
+                movingOut = (swingPower > 0 && upperDist < 200) || (swingPower < 0 && lowerDist < 200);
+                int distance = Math.min(upperDist, lowerDist);
+                double limit;
+                if(movingOut) {
+                    limit = Range.clip((distance / 400d), 0.1, 1.0);
+                } else {
+                    limit = Range.clip((distance / 400d), 0.3, 1.0);
+                }
                 double pow = Range.clip(swingPower, -limit, limit);
 
                 arm[0].setPower(pow);
