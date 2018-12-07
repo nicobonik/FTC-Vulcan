@@ -4,7 +4,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
 
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class Arm extends Subsystem {
     private final double armTicksPerRevolution = 5264 * 1.75;
