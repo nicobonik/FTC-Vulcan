@@ -84,13 +84,13 @@ public class Arm extends Subsystem {
                 boolean movingOut;
                 int upperDist = (int)(ticksPerRevolution / 4) - arm[1].getCurrentPosition();
                 int lowerDist = arm[1].getCurrentPosition();
-                movingOut = (swingPower > 0 && upperDist < 200) || (swingPower < 0 && lowerDist < 200);
+                movingOut = (swingPower > 0 && upperDist < 500) || (swingPower < 0 && lowerDist < 500);
                 int distance = Math.min(upperDist, lowerDist);
                 double limit;
                 if(movingOut) {
-                    limit = Range.clip((distance / 400d), 0.1, 1.0);
+                    limit = Range.clip((distance / 500d), 0.1, 1.0);
                 } else {
-                    limit = Range.clip((distance / 400d), 0.3, 1.0);
+                    limit = Range.clip((distance / 500d), 0.3, 1.0);
                 }
                 double pow = Range.clip(swingPower, -limit, limit);
 
