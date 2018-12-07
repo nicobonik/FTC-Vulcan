@@ -7,9 +7,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class Arm extends Subsystem {
-    private final double ticksPerRevolution = 5264 * 1.75;
-    private final double revsPerInch = 10; //placeholder
-    private final double maximumExtension = 10000; //placeholder
+    private final double armTicksPerRevolution = 5264 * 1.75;
+    private final double extensionTicksPerRevolution = 145.6;
+    private final double revsPerInch = 0.125 * 25.4;
+    private final double maximumExtension = 201 / 25.4;
     //private final double maxVoltage;
     public volatile double swingPosition, extendPosition, swingPower, extendPower;
     private volatile boolean swingPIDActive, extendPIDActive;
@@ -49,7 +50,7 @@ public class Arm extends Subsystem {
             }
         };
 
-        extendPID = new PID(-1, 0, 0, 0, extendControl);
+        extendPID = new PID(-0.2, 0, 0, 0, extendControl);
 
         swingControl = new PowerControl() {
             public void setPower(double power) {
@@ -73,16 +74,16 @@ public class Arm extends Subsystem {
     }
 
     public LinkedHashMap<String, String> updateSubsystem() {
-        if(swingPIDActive) {
+        /*if(swingPIDActive) {
             swingPIDActive = swingPID.maintainOnce(swingPosition, 2);
-        } else {
-            if((Math.abs(arm[1].getCurrentPosition()) > ticksPerRevolution / 4 && arm[1].getPower() > 0) || (Math.abs(arm[1].getCurrentPosition()) < 0 && arm[1].getPower() < 0)) {
+        } else {*/
+            if((Math.abs(arm[1].getCurrentPosition()) > armTicksPerRevolution / 4 && arm[1].getPower() > 0) || (Math.abs(arm[1].getCurrentPosition()) < 0 && arm[1].getPower() < 0)) {
                 arm[0].setPower(0);
                 arm[1].setPower(0);
                 swingPower = 0;
             } else {
                 boolean movingOut;
-                int upperDist = (int)(ticksPerRevolution / 4) - arm[1].getCurrentPosition();
+                int upperDist = (int)(armTicksPerRevolution / 4) - arm[1].getCurrentPosition();
                 int lowerDist = arm[1].getCurrentPosition();
                 movingOut = (swingPower > 0 && upperDist < 500) || (swingPower < 0 && lowerDist < 500);
                 int distance = Math.min(upperDist, lowerDist);
@@ -97,7 +98,7 @@ public class Arm extends Subsystem {
                 arm[0].setPower(pow);
                 arm[1].setPower(pow);
             }
-        }
+        //}
         if(extendPIDActive) {
             extendPIDActive = extendPID.maintainOnce(extendPosition, 2);
         } else {
@@ -116,7 +117,7 @@ public class Arm extends Subsystem {
 
     public void swing(boolean up) {
         swingPIDActive = true;
-        swingPosition = up ? ticksPerRevolution / 4 : 0;
+        swingPosition = up ? armTicksPerRevolution / 4 : 0;
     }
 
     public void extend(double speed) {
@@ -126,12 +127,12 @@ public class Arm extends Subsystem {
 
     public void extend(boolean out) {
         extendPIDActive = true;
-        extendPosition = out ? maximumExtension : 0;
+        extendPosition = out ? -maximumExtension * revsPerInch * extensionTicksPerRevolution : 0;
     }
 
     public void extendDist(double inches) {
         extendPIDActive = true;
-        extendPosition = extender.getCurrentPosition() + inches * revsPerInch * ticksPerRevolution;
+        extendPosition = -inches * revsPerInch * extensionTicksPerRevolution;
     }
 
     public void whileBusy() {
