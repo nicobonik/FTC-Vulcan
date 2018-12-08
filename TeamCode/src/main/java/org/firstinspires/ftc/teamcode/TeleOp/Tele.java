@@ -217,7 +217,7 @@ public class Tele extends OpMode {
     }
 
     protected void arcadeDrive(double forward, double turn) {
-        drivetrain.arcadeDrive(forward, turn);
+        drivetrain.mecanumDrive(forward, 0, turn, 0.6);
     }
 
     private interface routine {

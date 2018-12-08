@@ -2,16 +2,16 @@ package org.firstinspires.ftc.teamcode.TeleOp;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.ServoController;
 
 import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.Subsystems.Robot;
-import org.firstinspires.ftc.teamcode.Subsystems.Subsystem;
 
 @TeleOp(name="NormieDrive", group="Drive")
 public class NormieTeleop extends OpMode {
     protected Robot robot;
-    private boolean lastTrig, lastLeft, lastRight;
+    private boolean lastBump, lastLeft, lastRight, lastUp, lastDown;
 
     public void init() {
         robot = new Robot(hardwareMap, telemetry);
@@ -20,11 +20,13 @@ public class NormieTeleop extends OpMode {
     public void start() {
         robot.init();
         robot.drivetrain.setupIMU();
+        robot.drivetrain.setZeroP(DcMotor.ZeroPowerBehavior.FLOAT);
     }
 
     public void loop() {
         //emergency stop
         if(gamepad1.guide || gamepad2.guide) {
+            robot.disableServos();
             stop();
         }
         //drivetrain
@@ -33,34 +35,50 @@ public class NormieTeleop extends OpMode {
         } else {
             robot.drivetrain.tempPower = Drivetrain.BASE_POWER;
         }
-        robot.drivetrain.setGamepadState(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
+        robot.drivetrain.setGamepadState(scale(-gamepad1.left_stick_y), scale(gamepad1.left_stick_x), scale(gamepad1.right_stick_x));
         //arm
+        if(gamepad1.a || gamepad1.a) {
+            robot.arm.setZeroP(DcMotor.ZeroPowerBehavior.FLOAT);
+        }
+        if(gamepad1.b || gamepad2.b) {
+            robot.arm.setZeroP(DcMotor.ZeroPowerBehavior.BRAKE);
+        }
         if(gamepad2.y) {
-            robot.arm.swing(true);
+            robot.arm.swingAngle(90);
         } else if (gamepad2.x) {
-            robot.arm.swing(false);
+            robot.arm.swingAngle(0);
         } else {
             robot.arm.swing(scale(-gamepad2.left_stick_y));
+        }
+        if(gamepad2.dpad_up && !lastUp) {
+            robot.arm.extend(true);
+        } else if(gamepad2.dpad_down && !lastDown) {
+            robot.arm.extend(false);
+        } else {
             robot.arm.extend(scale(-gamepad2.right_stick_y));
         }
         //intake
-        if(gamepad2.dpad_right) {
+        if(gamepad2.right_trigger > 0.2) {
             robot.intake.intake(-0.8);
         } else if(lastRight) {
             robot.intake.intake(0);
-        } else if(gamepad2.dpad_left && !lastLeft) {
+        } else if(gamepad2.left_trigger > 0.2 && !lastLeft) {
             robot.intake.toggleIntake();
         }
         if(gamepad2.left_bumper) {
             robot.intake.door(true);
-        } else if(gamepad2.right_trigger > 0.2 && !lastTrig) {
+        } else if(gamepad2.right_bumper && !lastBump) {
             robot.intake.door(false);
         }
-        lastTrig = gamepad2.right_trigger > 0.2;
-        lastLeft = gamepad2.dpad_left;
-        lastRight = gamepad2.dpad_right;
-        robot.drivetrain.mecanumDrive(scale(gamepad1.left_stick_y), scale(gamepad1.left_stick_x), scale(gamepad1.right_stick_x), 0.8);
-        telemetry.addData("loop", "completed");
+        lastBump = gamepad2.right_bumper;
+        lastLeft = gamepad2.left_trigger > 0.2;
+        lastRight = gamepad2.right_trigger > 0.2;
+        lastUp = gamepad2.dpad_up;
+        lastDown = gamepad2.dpad_down;
+
+        telemetry.addData("armPower", robot.arm.swingPower);
+        telemetry.addData("arm", robot.arm.arm[1].getCurrentPosition());
+        telemetry.addData("extend target", robot.arm.extendPosition);
     }
 
     public void stop() {

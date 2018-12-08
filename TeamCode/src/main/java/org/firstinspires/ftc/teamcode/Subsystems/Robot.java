@@ -4,7 +4,9 @@ import android.util.Log;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.ServoController;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
@@ -17,10 +19,10 @@ public class Robot {
     public Intake intake;
     public Arm arm;
     private Subsystem[] subsystems;
-    private Runnable subsystemUpdater, telemetryUpdater;
+    private Runnable subsystemUpdater;//, telemetryUpdater;
     private HardwareMap hardwareMap;
     private Telemetry telemetry;
-    private Thread subsystemUpdateThread, telemetryUpdateThread;
+    private Thread subsystemUpdateThread;//, telemetryUpdateThread;
     private LinkedHashMap<String, String> telemetryPackets;
 
     public Robot(HardwareMap hwMap, Telemetry telem) {
@@ -28,15 +30,15 @@ public class Robot {
         telemetryPackets = new LinkedHashMap<>();
         hardwareMap = hwMap;
         drivetrain = new Drivetrain(
-            hardwareMap.dcMotor.get("front_left"),
-            hardwareMap.dcMotor.get("front_right"),
-            hardwareMap.dcMotor.get("back_left"),
-            hardwareMap.dcMotor.get("back_right"),
+            (DcMotorEx)hardwareMap.dcMotor.get("front_left"),
+            (DcMotorEx)hardwareMap.dcMotor.get("front_right"),
+            (DcMotorEx)hardwareMap.dcMotor.get("back_left"),
+            (DcMotorEx)hardwareMap.dcMotor.get("back_right"),
             hardwareMap.get(BNO055IMU.class, "imu")//,
             //hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName())
         );
         arm = new Arm(
-            new DcMotor[] {hardwareMap.dcMotor.get("arm_left"), hardwareMap.dcMotor.get("arm_right")},
+            new DcMotorEx[] {(DcMotorEx)hardwareMap.dcMotor.get("arm_left"), (DcMotorEx)hardwareMap.dcMotor.get("arm_right")},
             hardwareMap.dcMotor.get("extender")//,
             //hardwareMap.analogInput.get("potent")
         );
@@ -52,12 +54,9 @@ public class Robot {
                     while (!Thread.interrupted()) {
                         for (Subsystem subsystem : subsystems) {
                             if (subsystem != null) {
-                                //telemetryPackets.putAll(subsystem.updateSubsystem());
-                                subsystem.updateSubsystem();
+                                telemetryPackets.putAll(subsystem.updateSubsystem());
                             }
                         }
-                        telemetry.addData("running", true);
-                        telemetry.update();
                     }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -65,6 +64,23 @@ public class Robot {
                 }
             }
         };
+        /*telemetryUpdater = new Runnable() {
+            public void run() {
+                try {
+                    Thread.sleep(100);
+                    while (!Thread.interrupted()) {
+                        for(String key : telemetryPackets.keySet()) {
+                            telemetry.addData(key, telemetryPackets.get(key));
+                        }
+                        telemetry.update();
+                        telemetryPackets.clear();
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    stop();
+                }
+            }
+        };*/
     }
 
     public void init() {
@@ -72,6 +88,11 @@ public class Robot {
         subsystemUpdateThread.start();
         //telemetryUpdateThread = new Thread(telemetryUpdater);
         //telemetryUpdateThread.start();
+    }
+
+    public void disableServos() {
+        ServoController controller = intake.getServoController();
+        controller.pwmDisable();
     }
 
     public void stop() {

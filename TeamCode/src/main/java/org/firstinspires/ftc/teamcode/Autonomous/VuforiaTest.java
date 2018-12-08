@@ -90,7 +90,8 @@ import java.util.List;
  * is explained below.
  */
 
-@TeleOp(name="Concept: Vuforia Rover Nav", group ="Concept")
+@Disabled
+@TeleOp(name="Vuforia Rover Nav", group ="Testing")
 public class VuforiaTest extends LinearOpMode {
 
     /*

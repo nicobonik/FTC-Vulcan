@@ -1,92 +1,69 @@
 package org.firstinspires.ftc.teamcode.Autonomous;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.corningrobotics.enderbots.endercv.CameraViewDisplay;
+import org.firstinspires.ftc.teamcode.Subsystems.Arm;
+import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
+import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.MineralVisionContour;
+import org.firstinspires.ftc.teamcode.Subsystems.MineralVisionHough;
 import org.firstinspires.ftc.teamcode.Subsystems.Robot;
 
-@Autonomous(name = "TestAutonomous", group="Auto")
-public class AutoSilver extends LinearOpMode {
-    private Robot robot;
-    private ElapsedTime Runtime = new ElapsedTime();
-    private MineralVisionContour contourVision;
-    private int[] goldPos = new int[3];
+@Autonomous(name = "SilverAuto", group="Auto")
+public class AutoSilver extends BaseAuto {
     public void runOpMode() {
-        robot = new Robot(hardwareMap, telemetry);
-        contourVision = new MineralVisionContour();
-        contourVision.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
-        contourVision.setShowCountours(false);
-        //start on ground, init IMU, then pull up before match starts
-        robot.drivetrain.setupIMU(); //wait to start IMU until robot has landed
-        double startTime = getRuntime();
-        robot.arm.extendDist(-6); // placeholder
-        robot.arm.swing(false);
-        robot.arm.whileBusy();
-        waitForStart();
-        Runtime.reset();
-        //unfold bot
-        robot.arm.swing(true);
-        robot.arm.whileBusy();
-        //extend slides
-        startTime = getRuntime();
-        robot.arm.extend(1.0);
-        while(getRuntime() < startTime + 0.5) {}
-        robot.arm.extend(0);
-        robot.arm.whileBusy();
-        //drive forward
-        robot.drivetrain.driveEnc(4);
-        robot.drivetrain.whileBusy();
-        //retract slides
-        startTime = getRuntime();
-        robot.arm.extend(-1.0);
-        while(getRuntime() < startTime + 0.5) {}
-        robot.arm.extend(0);
-        //take video of sampling field, find most commonly detected gold position
-        robot.drivetrain.turn(50);
-        double heading = robot.drivetrain.heading();
-        contourVision.enable();
-        int goldCount = 0;
-        while(goldCount < 5 && Math.abs(robot.drivetrain.heading() - heading) < 100) {
-            if(contourVision.getGoldPos()) {
-                robot.drivetrain.slow(0.4);
-                goldCount++;
-            } else {
-                robot.drivetrain.slow(1.0);
+        super.runOpMode();
+        robot.drivetrain.turnEnc(50);
+        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
+        runUntilGold();
+        robot.arm.swingAngle(0);
+        while(robot.arm.isBusy() && opModeIsActive()) {}
+        robot.drivetrain.driveEnc(-6);
+        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
+        robot.drivetrain.turn(-robot.drivetrain.heading() + 90);
+        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
+        robot.drivetrain.driveEnc(48 * Math.sqrt(2));
+        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
+        robot.drivetrain.turn(45);
+        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
+        robot.drivetrain.driveEnc(24);
+        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
+        //placeholder for drop marker
+        robot.drivetrain.turn(180);
+        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
+        robot.drivetrain.driveEnc(72);
+        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
+        robot.arm.extendDist(4);
+        robot.arm.swingAngle(15);
+        while(robot.arm.isBusy() && opModeIsActive()) {}
+        robot.arm.swingAngle(0);
+        vis.disable();
+        robot.stop();
+    }
+
+    private void runUntilGold() {
+        while (!vis.getGoldPos()) {
+            robot.drivetrain.turnEnc(reSweep ? 5 : -5);
+            sweepProgress++;
+            if(sweepProgress > 20) {
+                reSweep = !reSweep;
+                sweepProgress = 0;
+            }
+            while (robot.drivetrain.isBusy() && opModeIsActive()) {}
+        }
+        int counter = 0;
+        for(int i = 0; i < 10; i++) {
+            if(vis.getGoldPos()) {
+                counter++;
             }
         }
-        contourVision.disable();
-
-        //fold slides
-        robot.arm.swing(false);
-        //drive through gold position
-        robot.drivetrain.driveEnc(6);
-        robot.drivetrain.whileBusy();
-        robot.drivetrain.driveEnc(-6);
-        robot.drivetrain.whileBusy();
-        //drive to depot
-        robot.drivetrain.turn((int)(heading - robot.drivetrain.heading()));
-        robot.drivetrain.whileBusy();
-        robot.drivetrain.turn(90);
-        robot.drivetrain.whileBusy();
-        robot.drivetrain.driveEnc(24 * Math.sqrt(2));
-        robot.drivetrain.whileBusy();
-        robot.drivetrain.turn(-45);
-        robot.drivetrain.whileBusy();
-        robot.drivetrain.driveEnc(60);
-        robot.drivetrain.whileBusy();
-        //drop team marker
-        robot.intake.intake(-1);
-        sleep(500);
-        robot.intake.stop();
-        //park
-        robot.drivetrain.turn(180);
-        robot.drivetrain.whileBusy();
-        robot.drivetrain.driveEnc(72);
-        robot.drivetrain.whileBusy();
-
-        robot.drivetrain.stop();
+        if(counter < 7) {
+            runUntilGold();
+        }
     }
 }

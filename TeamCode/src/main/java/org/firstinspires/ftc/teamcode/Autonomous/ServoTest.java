@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
-@Autonomous(name = "ServoTest", group="Auto")
+@Autonomous(name = "ServoTest", group="Testing")
 public class ServoTest extends LinearOpMode {
     public void runOpMode() {
         CRServo servo1 = hardwareMap.crservo.get("servo1");

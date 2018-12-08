@@ -18,14 +18,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MineralVisionContour extends OpenCVPipeline {
-    private int imageWidth = 480;
-    private int imageHeight = 854;
+    public int imageWidth = 480;
+    public int imageHeight = 854;
     private boolean showContours = false;
     private Telemetry telemetry;
     // To keep it such that we don't have to instantiate a new Mat every call to processFrame,
     // we declare the Mats up here and reuse them. This is easier on the garbage collector.
     private Mat hls = new Mat();
     private Mat thresholded = new Mat();
+    public double h, l, s;
+    public double x, y;
 
     // this is just here so we can expose it later thru getContours.
     private List<MatOfPoint> contours = new ArrayList<>();
@@ -47,22 +49,30 @@ public class MineralVisionContour extends OpenCVPipeline {
     public Mat processFrame(Mat rgba, Mat gray) {
         imageHeight = rgba.height();
         imageWidth = rgba.width();
+        Core.flip(rgba, rgba, 0);
         // First, we change the colorspace from RGBA to HSV, which is usually better for color
         Imgproc.cvtColor(rgba, hls, Imgproc.COLOR_RGB2HLS, 3);
         // Then, we threshold our hsv image so that we get a black/white binary image where white
         // is the blues listed in the specified range of values
         // you can use a program like WPILib GRIP to find these values, or just play around.
-        Core.inRange(hls, new Scalar(10, 90, 100), new Scalar(40, 180, 220), thresholded);
+        Core.inRange(hls, new Scalar(0, 20, 100), new Scalar(30, 140, 255), thresholded);
         // we blur the thresholded image to remove noise
         // there are other types of blur like box blur or gaussian which can be explored.
         //Imgproc.blur(thresholded, thresholded, new Size(3, 3));
 
-        Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT,
+        Mat element = Imgproc.getStructuringElement(
+                Imgproc.MORPH_RECT,
                 new Size(7, 7),
-                new Point(3, 3));
+                new Point(3, 3)
+        );
 
         Imgproc.erode(thresholded, thresholded, element);
         Imgproc.dilate(thresholded, thresholded, element);
+
+        h = hls.get(imageWidth / 2, imageHeight / 2)[0];
+        l = hls.get(imageWidth / 2, imageHeight / 2)[1];
+        s = hls.get(imageWidth / 2, imageHeight / 2)[2];
+        Imgproc.circle(rgba, new Point(imageWidth / 2, imageHeight / 2), 15, new Scalar(255, 0, 0), 2, 8);
         // create a list to hold our contours.
         // Conceptually, there is going to be a single contour for the outline of every blue object
         // that we can find. We can iterate over them to find objects of interest.
@@ -95,13 +105,13 @@ public class MineralVisionContour extends OpenCVPipeline {
                 //}
                 //hullCont.fromList(hullPts);
                 Rect bounding = Imgproc.boundingRect(contour);
-                telemetry.addData("x", bounding.x);
-                telemetry.addData("y", bounding.y);
+                x = bounding.x;
+                y = bounding.y;
                 double area = Imgproc.contourArea(contour);
                 if(area > 100 && area < 1000) { //placeholder areas
                     contour.convertTo(temp, CvType.CV_32F);
                     if(area > 0.7 * bounding.area() && area < 1 * bounding.area()) {
-                        if(Math.abs(bounding.y + bounding.height / 2 - imageHeight) < 20)
+                        if(Math.abs(bounding.y + bounding.height / 2 - imageHeight / 2) < 20)
                         return true;
                     }
                 }

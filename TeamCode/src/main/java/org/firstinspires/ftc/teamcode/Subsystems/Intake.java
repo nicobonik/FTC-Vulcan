@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.ServoController;
 
 import java.util.LinkedHashMap;
 
@@ -12,22 +13,23 @@ public class Intake extends Subsystem {
     private volatile double power;
     private CRServo intake;
     private Servo door;
-    private double[] positions = {0.3, 0.55, 0.9};
+    private double[] positions = {0.3, 0.65, 1.0};
     public Intake(CRServo in, Servo dr) {
         intake = in;
         in.setDirection(DcMotorSimple.Direction.REVERSE);
         door = dr;
         power = 0;
         position = 0;
+        telemetryPackets = new LinkedHashMap<>();
     }
 
     public LinkedHashMap<String, String> updateSubsystem() {
+        telemetryPackets.clear();
         intake.setPower(power);
         door.setPosition(positions[position]);
         return telemetryPackets;
     }
 
-    //todo: make intake toggle
     public void toggleIntake() {
         if(power != 0) {
             power = 0;
@@ -40,16 +42,19 @@ public class Intake extends Subsystem {
         this.power = power;
     }
 
-    public void stop() {
-        intake.setPower(0);
-        door.setPosition(0.75);
-    }
-
     public void door(boolean closed) {
         if(closed) {
             position = 0;
         } else {
             position = Math.min(++position, 2);
         }
+    }
+
+    public ServoController getServoController() {
+        return door.getController();
+    }
+
+    public void stop() {
+        intake.setPower(0);
     }
 }

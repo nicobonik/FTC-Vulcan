@@ -16,8 +16,11 @@ import org.firstinspires.ftc.teamcode.Subsystems.Robot;
 
 @Autonomous(name = "TestAuto", group="Auto")
 public class BaseAuto extends LinearOpMode {
-    private Robot robot;
-    private MineralVisionContour vis;
+    protected Robot robot;
+    protected MineralVisionContour vis;
+    protected boolean reSweep;
+    protected int sweepCount = 0;
+    protected int sweepProgress = 0;
     public void runOpMode() {
         vis = new MineralVisionContour();
         vis.init(hardwareMap.appContext, CameraViewDisplay.getInstance(), 1);
@@ -27,20 +30,32 @@ public class BaseAuto extends LinearOpMode {
         robot.drivetrain.setupIMU();
         robot.init();
         waitForStart();
+        robot.arm.swingAngle(90);
+        robot.arm.extendDist(8);
         robot.drivetrain.driveEnc(6);
-        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
-        sleep(2000);
-        robot.drivetrain.turnEnc(50);
-        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
-        while (!vis.getGoldPos() && opModeIsActive()) {
-            telemetry.addData("gold", "not found");
-            telemetry.update();
+        while(robot.drivetrain.isBusy() || robot.arm.isBusy() && opModeIsActive()) {}
+        robot.arm.extendDist(0);
+        while(robot.arm.isBusy() && opModeIsActive()) {}
+    }
+
+    private void runUntilGold() {
+        while (!vis.getGoldPos()) {
+            robot.drivetrain.turnEnc(reSweep ? 5 : -5);
+            sweepProgress++;
+            if(sweepProgress > 20) {
+                reSweep = !reSweep;
+                sweepProgress = 0;
+            }
+            while (robot.drivetrain.isBusy() && opModeIsActive()) {}
         }
-        telemetry.addData("gold", "found");
-        telemetry.update();
-        vis.disable();
-        robot.drivetrain.driveEnc(6);
-        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
-        robot.stop();
+        int counter = 0;
+        for(int i = 0; i < 10; i++) {
+            if(vis.getGoldPos()) {
+                counter++;
+            }
+        }
+        if(counter < 7) {
+            runUntilGold();
+        }
     }
 }

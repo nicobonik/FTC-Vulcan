@@ -51,16 +51,16 @@ public class PID {
         integral = 0;
         lastError = 0;
         timer.reset();
-        lastTime = timer.time();
+        lastTime = timer.seconds();
     }
 
     private double getResponse(double currentPosition, double target) {
         double error = currentPosition - target;
         if(cyclic) {
-            while(error > maxPos - minPos) {
+            while(error > maxPos) {
                 error -= maxPos - minPos;
             }
-            while(error < minPos - maxPos) {
+            while(error < minPos) {
                 error += maxPos - minPos;
             }
         }
@@ -72,11 +72,12 @@ public class PID {
             response += (Ki * integral);
         }
         //Derivative
-        response += (Kd * (error - lastError) / (timer.time() - lastTime));
+        response += (Kd * (error - lastError) / (timer.seconds() - lastTime));
         //Bias
-        response = Math.signum(response) * Math.max(bias, Math.abs(response));
+        //response = Math.signum(response) * Math.max(bias, Math.abs(response));
         lastError = error;
         lastPower = response;
+        lastTime = timer.seconds();
         return response;
     }
 
@@ -109,6 +110,10 @@ public class PID {
         Kp = kp;
         Ki = ki;
         Kd = kd;
+    }
+
+    public double getPosition() {
+        return control.getPosition();
     }
 
     public void stop() {

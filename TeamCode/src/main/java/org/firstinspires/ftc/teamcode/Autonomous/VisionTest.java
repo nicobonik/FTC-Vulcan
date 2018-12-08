@@ -7,40 +7,29 @@ import org.corningrobotics.enderbots.endercv.CameraViewDisplay;
 import org.firstinspires.ftc.teamcode.Subsystems.MineralVisionContour;
 import org.firstinspires.ftc.teamcode.Subsystems.MineralVisionHough;
 
-@Autonomous(name="VisionTest", group="Vision")
+@Autonomous(name="VisionTest", group="Testing")
 public class VisionTest extends OpMode {
     private MineralVisionContour contourVision;
-    private MineralVisionHough houghVision;
     private boolean contour = true;
     private boolean hough = false;
     public void init() {
-        if(contour) {
-            contourVision = new MineralVisionContour();
-            contourVision.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
-            contourVision.setShowCountours(true);
-            contourVision.enable();
-        } else if(hough) {
-            houghVision = new MineralVisionHough();
-            houghVision.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
-            houghVision.setShowCountours(true);
-            houghVision.setTelem(telemetry);
-            houghVision.enable();
-        }
+        contourVision = new MineralVisionContour();
+        contourVision.init(hardwareMap.appContext, CameraViewDisplay.getInstance(), 1); //add a third parameter with value 1 to use front camera
+        contourVision.setShowCountours(true);
+        contourVision.setTelemetry(telemetry);
+        contourVision.enable();
     }
 
     public void loop() {
-        if(contour) {
-            telemetry.addData("GoldPos", contourVision.getGoldPos());
-        } else if(hough) {
-            telemetry.addData("GoldPos", houghVision.getGoldPos());
-        }
+        telemetry.addData("gold", contourVision.getGoldPos());
+        telemetry.addData("x", contourVision.x);
+        telemetry.addData("y", contourVision.y);
+        telemetry.addData("range", contourVision.imageHeight / 2 - 20 + " - " + contourVision.imageHeight / 2 + 20);
+        telemetry.addData("hls", "h: " + contourVision.h + ", l: " + contourVision.l + ", s: " + contourVision.s);
+        telemetry.update();
     }
 
     public void stop() {
-        if(contour) {
-            contourVision.disable();
-        } else if(hough) {
-            houghVision.disable();
-        }
+        contourVision.disable();
     }
 }
