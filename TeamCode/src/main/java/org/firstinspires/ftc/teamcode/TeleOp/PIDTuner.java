@@ -16,22 +16,22 @@ public class PIDTuner extends OpMode {
 
     public void loop() {
         if(gamepad1.a) {
-            Kp += 0.01;
+            Kp += 0.001;
         }
         if(gamepad1.b) {
-            Kp -= 0.01;
+            Kp -= 0.001;
         }
         if(gamepad1.x) {
-            Ki += 0.01;
+            Ki += 0.001;
         }
         if(gamepad1.y) {
-            Ki -= 0.01;
+            Ki -= 0.001;
         }
         if(gamepad1.left_bumper) {
-            Kd += 0.01;
+            Kd += 0.001;
         }
         if(gamepad1.right_bumper) {
-            Kd -= 0.01;
+            Kd -= 0.001;
         }
         robot.drivetrain.drivePID.setCoefficients(Kp, Ki, Kd);
         telemetry.addData("kp: ", Kp);

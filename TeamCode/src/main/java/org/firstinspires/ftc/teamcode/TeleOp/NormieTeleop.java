@@ -75,10 +75,6 @@ public class NormieTeleop extends OpMode {
         lastRight = gamepad2.right_trigger > 0.2;
         lastUp = gamepad2.dpad_up;
         lastDown = gamepad2.dpad_down;
-
-        telemetry.addData("armPower", robot.arm.swingPower);
-        telemetry.addData("arm", robot.arm.arm[1].getCurrentPosition());
-        telemetry.addData("extend target", robot.arm.extendPosition);
     }
 
     public void stop() {

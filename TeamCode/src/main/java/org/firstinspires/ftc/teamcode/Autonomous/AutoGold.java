@@ -17,53 +17,21 @@ import org.firstinspires.ftc.teamcode.Subsystems.Robot;
 @Autonomous(name = "GoldAuto", group="Auto")
 public class AutoGold extends BaseAuto {
     public void runOpMode() {
-        super.runOpMode();
-        robot.drivetrain.turnEnc(50);
+        robot = new Robot(hardwareMap, telemetry);
+        robot.drivetrain.setupIMU();
+        robot.init();
+        waitForStart();
+        telemetry.addData("started", "true");
+        telemetry.update();
+        robot.drivetrain.driveEnc(36 * Math.sqrt(2));
         while(robot.drivetrain.isBusy() && opModeIsActive()) {}
-        runUntilGold();
-        robot.arm.swingAngle(0);
-        while(robot.arm.isBusy() && opModeIsActive()) {}
-        robot.drivetrain.driveEnc(-6);
-        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
-        robot.drivetrain.turn(-robot.drivetrain.heading() + 90);
-        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
-        robot.drivetrain.driveEnc(48 * Math.sqrt(2));
-        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
-        robot.drivetrain.turn(45);
-        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
-        robot.drivetrain.driveEnc(24);
-        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
-        //placeholder for drop marker
-        robot.drivetrain.turn(180);
+        double startTime = getRuntime();
+        robot.intake.intake(-0.8);
+        while(opModeIsActive() && getRuntime() < startTime + 3) {}
+        robot.intake.intake(0);
+        robot.drivetrain.turn(135);
         while(robot.drivetrain.isBusy() && opModeIsActive()) {}
         robot.drivetrain.driveEnc(72);
-        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
-        robot.arm.extendDist(4);
-        robot.arm.swingAngle(15);
-        while(robot.arm.isBusy() && opModeIsActive()) {}
-        robot.arm.swingAngle(0);
-        vis.disable();
         robot.stop();
-    }
-
-    private void runUntilGold() {
-        while (!vis.getGoldPos()) {
-            robot.drivetrain.turnEnc(reSweep ? 5 : -5);
-            sweepProgress++;
-            if(sweepProgress > 20) {
-                reSweep = !reSweep;
-                sweepProgress = 0;
-            }
-            while (robot.drivetrain.isBusy() && opModeIsActive()) {}
-        }
-        int counter = 0;
-        for(int i = 0; i < 10; i++) {
-            if(vis.getGoldPos()) {
-                counter++;
-            }
-        }
-        if(counter < 7) {
-            runUntilGold();
-        }
     }
 }

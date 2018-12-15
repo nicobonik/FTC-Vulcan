@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Navigation {
-    public double x, y, hdg;
+    private double x, y, hdg;
     private BNO055IMU imu;
     private Vision vis;
     private ElapsedTime timer;

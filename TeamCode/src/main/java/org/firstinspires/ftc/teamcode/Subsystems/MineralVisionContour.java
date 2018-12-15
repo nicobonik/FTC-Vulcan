@@ -18,8 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MineralVisionContour extends OpenCVPipeline {
-    public int imageWidth = 480;
-    public int imageHeight = 854;
+    private int imageWidth = 480;
+    private int imageHeight = 854;
     private boolean showContours = false;
     private Telemetry telemetry;
     // To keep it such that we don't have to instantiate a new Mat every call to processFrame,
@@ -55,7 +55,7 @@ public class MineralVisionContour extends OpenCVPipeline {
         // Then, we threshold our hsv image so that we get a black/white binary image where white
         // is the blues listed in the specified range of values
         // you can use a program like WPILib GRIP to find these values, or just play around.
-        Core.inRange(hls, new Scalar(0, 20, 100), new Scalar(30, 140, 255), thresholded);
+        Core.inRange(hls, new Scalar(5, 80, 70), new Scalar(20, 100, 120), thresholded);
         // we blur the thresholded image to remove noise
         // there are other types of blur like box blur or gaussian which can be explored.
         //Imgproc.blur(thresholded, thresholded, new Size(3, 3));
@@ -92,27 +92,26 @@ public class MineralVisionContour extends OpenCVPipeline {
 
     public boolean getGoldPos() {
         try {
-            MatOfPoint2f temp = new MatOfPoint2f();
             for (int i = 1; i < contours.size(); i++) {
                 MatOfPoint contour = contours.get(i);
 
-                //MatOfInt hull = new MatOfInt();
-                //Imgproc.convexHull(contour, hull);
-                //MatOfPoint hullCont = new MatOfPoint();
-                //ArrayList<Point> hullPts = new ArrayList<>();
-                //for (int j : hull.toArray()) {
-                //    hullPts.add(new Point(contour.get(0, j)));
-                //}
-                //hullCont.fromList(hullPts);
+                MatOfInt hull = new MatOfInt();
+                Imgproc.convexHull(contour, hull);
+                MatOfPoint hullCont = new MatOfPoint();
+                ArrayList<Point> hullPts = new ArrayList<>();
+                for (int j : hull.toArray()) {
+                    hullPts.add(new Point(contour.get(0, j)));
+                }
+                hullCont.fromList(hullPts);
                 Rect bounding = Imgproc.boundingRect(contour);
-                x = bounding.x;
-                y = bounding.y;
-                double area = Imgproc.contourArea(contour);
+                double area = Imgproc.contourArea(hullCont);
                 if(area > 100 && area < 1000) { //placeholder areas
-                    contour.convertTo(temp, CvType.CV_32F);
                     if(area > 0.7 * bounding.area() && area < 1 * bounding.area()) {
-                        if(Math.abs(bounding.y + bounding.height / 2 - imageHeight / 2) < 20)
-                        return true;
+                        if(Math.abs(bounding.y + bounding.height / 2 - imageHeight / 2) < 20) {
+                            x = bounding.x;
+                            y = bounding.y;
+                            return true;
+                        }
                     }
                 }
             }

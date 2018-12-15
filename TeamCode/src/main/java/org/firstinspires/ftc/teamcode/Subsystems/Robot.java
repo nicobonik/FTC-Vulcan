@@ -39,7 +39,7 @@ public class Robot {
         );
         arm = new Arm(
             new DcMotorEx[] {(DcMotorEx)hardwareMap.dcMotor.get("arm_left"), (DcMotorEx)hardwareMap.dcMotor.get("arm_right")},
-            hardwareMap.dcMotor.get("extender")//,
+                (DcMotorEx)hardwareMap.dcMotor.get("extender")//,
             //hardwareMap.analogInput.get("potent")
         );
         intake = new Intake(

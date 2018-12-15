@@ -27,18 +27,39 @@ public class BaseAuto extends LinearOpMode {
         vis.setShowCountours(true);
         vis.enable();
         robot = new Robot(hardwareMap, telemetry);
-        robot.drivetrain.setupIMU();
         robot.init();
-        waitForStart();
-        robot.arm.swingAngle(90);
-        robot.arm.extendDist(8);
+        while(!isStarted()) {
+            robot.arm.swingAngle(0);
+        }
+        telemetry.addData("started", "true");
+        telemetry.update();
+        robot.arm.swingAngle(60);
+        robot.drivetrain.setupIMU();
         robot.drivetrain.driveEnc(6);
-        while(robot.drivetrain.isBusy() || robot.arm.isBusy() && opModeIsActive()) {}
-        robot.arm.extendDist(0);
+        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
+        runUntilGold();
+        robot.arm.swingAngle(0);
+        while(robot.arm.isBusy() && opModeIsActive()) {}
+        robot.drivetrain.driveEnc(Math.abs(24 / Math.sqrt(2) / Math.cos(robot.drivetrain.heading())));
+        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
+        robot.drivetrain.turn(-2 * robot.drivetrain.heading());
+        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
+        robot.drivetrain.driveEnc(Math.abs(24 / Math.sqrt(2) / Math.cos(robot.drivetrain.heading())));
+        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
+        robot.drivetrain.turn(-robot.drivetrain.heading());
+        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
+        robot.drivetrain.driveEnc(12);
+        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
+        robot.drivetrain.turn(135);
+        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
+        robot.drivetrain.driveEnc(74);
+        while(robot.drivetrain.isBusy() && opModeIsActive()) {}
+        robot.arm.swingAngle(15);
+        robot.arm.extendDist(6);
         while(robot.arm.isBusy() && opModeIsActive()) {}
     }
 
-    private void runUntilGold() {
+    protected void runUntilGold() {
         while (!vis.getGoldPos()) {
             robot.drivetrain.turnEnc(reSweep ? 5 : -5);
             sweepProgress++;
@@ -54,7 +75,7 @@ public class BaseAuto extends LinearOpMode {
                 counter++;
             }
         }
-        if(counter < 7) {
+        if(counter < 5) {
             runUntilGold();
         }
     }

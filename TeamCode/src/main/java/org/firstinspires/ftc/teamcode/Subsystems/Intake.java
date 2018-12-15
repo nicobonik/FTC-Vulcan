@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.hardware.ServoController;
 import java.util.LinkedHashMap;
 
 public class Intake extends Subsystem {
-    public volatile int position;
+    private volatile int position;
     private volatile double power;
     private CRServo intake;
     private Servo door;
@@ -19,7 +19,7 @@ public class Intake extends Subsystem {
         in.setDirection(DcMotorSimple.Direction.REVERSE);
         door = dr;
         power = 0;
-        position = 0;
+        position = 2;
         telemetryPackets = new LinkedHashMap<>();
     }
 

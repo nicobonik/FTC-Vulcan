@@ -12,9 +12,9 @@ public class Arm extends Subsystem {
     private final double revsPerInch = 0.125 * 25.4;
     private final double maximumExtension = 200 / 25.4;
     //private final double maxVoltage;
-    public volatile double swingPosition, extendPosition, swingPower, extendPower;
+    private volatile double swingPosition, extendPosition, swingPower, extendPower;
     private volatile boolean swingPIDActive, extendPIDActive;
-    public DcMotorEx[] arm;
+    private DcMotorEx[] arm;
     private DcMotorEx extender;
     //private AnalogInput potentiometer;
     private PID extendPID, swingPID;
@@ -39,9 +39,13 @@ public class Arm extends Subsystem {
         arm[0].setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         arm[1].setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        extender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         extender.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         extender.setDirection(DcMotor.Direction.REVERSE);
+
+        extender.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         extendControl = new PowerControl() {
             public void setPower(double power) {
@@ -52,8 +56,8 @@ public class Arm extends Subsystem {
             }
         };
 
-        extendPID = new PID(-0.02, 0, 0, 0, extendControl);
-        extendPID.limitOutput(-0.1, 0.1);
+        extendPID = new PID(0.4, 0.05, 0.005, 0, extendControl);
+        extendPID.limitOutput(-1.0, 1.0);
         swingControl = new PowerControl() {
             public void setPower(double power) {
                 arm[0].setPower(power);
@@ -61,14 +65,14 @@ public class Arm extends Subsystem {
             }
 
             public double getPosition() {
-                return arm[1].getCurrentPosition() / 2;
+                return arm[1].getCurrentPosition() / armTicksPerRevolution * 360;
                 //return (potentiometer.getVoltage() / maxVoltage) * 270;
             }
         };
 
-        swingPID = new PID(-0.005, -0.003, 0.005, 0, swingControl);
+        swingPID = new PID(0.02, 0.005, 0.00, 0, swingControl);
 
-        swingPID.limitOutput(-0.1, 0.1);
+        swingPID.limitOutput(-1.0, 1.0);
 
         swingPosition = 0;
         extendPosition = 0;
@@ -77,10 +81,13 @@ public class Arm extends Subsystem {
 
     public LinkedHashMap<String, String> updateSubsystem() {
         telemetryPackets.clear();
+        if(arm[1].getCurrentPosition() < 0) {
+            arm[1].setPower(0.1);
+        }
         if(swingPIDActive) {
             swingPIDActive = swingPID.maintainOnce(swingPosition, 2);
         } else {
-            if((Math.abs(arm[1].getCurrentPosition()) > armTicksPerRevolution / 4 && arm[1].getPower() > 0) || (Math.abs(arm[1].getCurrentPosition()) < 0 && arm[1].getPower() < 0)) {
+            if(Math.abs(arm[1].getCurrentPosition()) > armTicksPerRevolution / 4 + 75 && (arm[1].getPower() > 0 || swingPower > 0) || (Math.abs(arm[1].getCurrentPosition()) < 0 && (arm[1].getPower() < -75 || swingPower < 0))) {
                 arm[0].setPower(0);
                 arm[1].setPower(0);
                 swingPower = 0;
@@ -92,9 +99,9 @@ public class Arm extends Subsystem {
                 int distance = Math.min(upperDist, lowerDist);
                 double limit;
                 if(movingOut) {
-                    limit = Range.clip((distance / 500d), 0.1, 1.0);
+                    limit = Range.clip((distance / 500d), 0.15, 1.0);
                 } else {
-                    limit = Range.clip((distance / 500d), 0.3, 1.0);
+                    limit = Range.clip((distance / 500d), 0.4, 1.0);
                 }
                 double pow = Range.clip(swingPower, -limit, limit);
 
@@ -103,7 +110,7 @@ public class Arm extends Subsystem {
             }
         }
         if(extendPIDActive) {
-            extendPIDActive = extendPID.maintainOnce(extendPosition, 2);
+            extendPIDActive = extendPID.maintainOnce(extendPosition, 0.05);
         } else {
             extender.setPower(extendPower);
         }
@@ -113,25 +120,29 @@ public class Arm extends Subsystem {
     public void swing(double speed) {
         if(speed != 0) {
             swingPIDActive = false;
+        } if (!swingPIDActive) {
+            double power = swingPower;
+            if (speed - swingPower >= 0.02) {
+                power += 0.02;
+            } else if (speed - swingPower <= -0.02) {
+                power -= 0.02;
+            }
+            power = Math.round(power * 100) / 100.0;
+            swingPower = Range.clip(power, -1.0, 1.0);
         }
-        double power = swingPower;
-        if(speed - swingPower >= 0.02) {
-            power += 0.02;
-        } else if(speed - swingPower <= -0.02) {
-            power -= 0.02;
-        }
-        power = Math.round(power * 100) / 100.0;
-        swingPower = Range.clip(power, -0.24, 0.44);
     }
 
     public void swingAngle(double angle) {
         swingPIDActive = true;
-        swingPosition = angle / 360 * armTicksPerRevolution;
+        swingPosition = Math.max(Math.min(angle, 90), 0);
+        swingPID.reset();
     }
 
     public void extend(double speed) {
-        extendPIDActive = false;
-        extendPower = Range.clip(speed, -0.2, 0.2);
+        if(speed != 0) {
+            extendPIDActive = false;
+        }
+        extendPower = speed;
     }
 
     public void extend(boolean out) {
@@ -147,6 +158,19 @@ public class Arm extends Subsystem {
     public void extendDist(double inches) {
         extendPIDActive = true;
         extendPosition = inches;
+        extendPID.reset();
+    }
+
+    public void resetEnc() {
+        arm[0].setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        arm[1].setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        extender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        arm[0].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        arm[1].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        extender.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
     public void whileBusy() {

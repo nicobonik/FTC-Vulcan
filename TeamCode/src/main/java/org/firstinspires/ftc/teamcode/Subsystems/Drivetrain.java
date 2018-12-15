@@ -25,7 +25,7 @@ public class Drivetrain extends Subsystem {
     private BNO055IMU imu; //change back to private
     private BNO055IMU.Parameters parameters;
     //private Navigation nav;
-    public PID drivePID, turnPID;
+    private PID drivePID, turnPID;
     private PowerControl driveControl, turnControl;
 
     public Drivetrain(DcMotorEx frontLeft, DcMotorEx frontRight, DcMotorEx backLeft, DcMotorEx backRight, BNO055IMU IMU) {
@@ -61,7 +61,7 @@ public class Drivetrain extends Subsystem {
             }
         };
 
-        drivePID = new PID(-0.075, 0, -0.005, 0, driveControl);
+        drivePID = new PID(0.075, 0, 0.005, 0, driveControl);
         drivePID.limitOutput(-1, 1);
 
         turnControl = new PowerControl() {
@@ -75,7 +75,7 @@ public class Drivetrain extends Subsystem {
                 return imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
             }
         };
-        turnPID = new PID(-0.01, 0, -0.005, 0, turnControl, -180, 180);
+        turnPID = new PID(0.01, 0, 0.005, 0, turnControl, -180, 180);
         turnPID.limitOutput(-1.0, 1.0);
 
         tempPower = BASE_POWER;

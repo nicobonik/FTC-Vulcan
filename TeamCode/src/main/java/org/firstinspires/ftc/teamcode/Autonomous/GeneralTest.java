@@ -23,15 +23,10 @@ public class GeneralTest extends LinearOpMode {
         robot.drivetrain.setupIMU();
         robot.init();
         waitForStart();
-        robot.arm.extendDist(4);
-        /*robot.drivetrain.turn(90);
-        while(opModeIsActive()) {// && robot.drivetrain.isBusy()) {
-            telemetry.addData("position", robot.drivetrain.turnPID.getPosition());
-            telemetry.addData("error", robot.drivetrain.turnPID.getPosition() - 90);
-            //telemetry.addData("gold", vis.getGoldPos() ? "found" : "not found");
+        while(opModeIsActive()) {
+            telemetry.addData("position", robot.drivetrain.getPosition());
             telemetry.update();
-        }*/
-        //vis.disable();
+        }
         robot.stop();
     }
 }

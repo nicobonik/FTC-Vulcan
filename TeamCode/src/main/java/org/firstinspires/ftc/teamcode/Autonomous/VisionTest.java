@@ -14,7 +14,7 @@ public class VisionTest extends OpMode {
     private boolean hough = false;
     public void init() {
         contourVision = new MineralVisionContour();
-        contourVision.init(hardwareMap.appContext, CameraViewDisplay.getInstance(), 1); //add a third parameter with value 1 to use front camera
+        contourVision.init(hardwareMap.appContext, CameraViewDisplay.getInstance()); //add a third parameter with value 1 to use front camera
         contourVision.setShowCountours(true);
         contourVision.setTelemetry(telemetry);
         contourVision.enable();
@@ -24,7 +24,7 @@ public class VisionTest extends OpMode {
         telemetry.addData("gold", contourVision.getGoldPos());
         telemetry.addData("x", contourVision.x);
         telemetry.addData("y", contourVision.y);
-        telemetry.addData("range", contourVision.imageHeight / 2 - 20 + " - " + contourVision.imageHeight / 2 + 20);
+        telemetry.addData("range", contourVision.imageHeight / 2 - 20 + " - " + (contourVision.imageHeight / 2 + 20));
         telemetry.addData("hls", "h: " + contourVision.h + ", l: " + contourVision.l + ", s: " + contourVision.s);
         telemetry.update();
     }

@@ -14,13 +14,13 @@ import org.opencv.imgproc.Imgproc;
 public class MineralVisionHough extends OpenCVPipeline {
     private int imageWidth, imageHeight;
     private boolean showContours = false;
-    Mat main;
-    Mat circles = new Mat();
-    Telemetry telem;
-    double[] circle1, circle2;
-    int[][] candidatePos = new int[3][2];
-    int cannyThresh = 120;
-    int houghThresh = 180;
+    private Mat main;
+    private Mat circles = new Mat();
+    private Telemetry telem;
+    private double[] circle1, circle2;
+    private int[][] candidatePos = new int[3][2];
+    private int cannyThresh = 120;
+    private int houghThresh = 180;
 
     public synchronized void setShowCountours(boolean enabled) {
         showContours = enabled;
