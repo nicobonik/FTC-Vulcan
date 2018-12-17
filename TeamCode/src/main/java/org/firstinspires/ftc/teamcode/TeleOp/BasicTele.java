@@ -1,14 +1,8 @@
 package org.firstinspires.ftc.teamcode.TeleOp;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.util.Range;
-
-import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
-import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 
 @TeleOp(name="BasicDrive", group="Drive")
 public class BasicTele extends OpMode {

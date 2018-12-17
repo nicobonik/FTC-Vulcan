@@ -16,90 +16,18 @@ import static org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerA
 
 public class Robot {
     public Drivetrain drivetrain;
-    public Intake intake;
-    public Arm arm;
-    private Subsystem[] subsystems;
-    private Runnable subsystemUpdater;//, telemetryUpdater;
-    private HardwareMap hardwareMap;
-    private Telemetry telemetry;
-    private Thread subsystemUpdateThread;//, telemetryUpdateThread;
-    private LinkedHashMap<String, String> telemetryPackets;
 
-    public Robot(HardwareMap hwMap, Telemetry telem) {
-        telemetry = telem;
-        telemetryPackets = new LinkedHashMap<>();
-        hardwareMap = hwMap;
+    public Robot(HardwareMap hwMap) {
         drivetrain = new Drivetrain(
-            (DcMotorEx)hardwareMap.dcMotor.get("front_left"),
-            (DcMotorEx)hardwareMap.dcMotor.get("front_right"),
-            (DcMotorEx)hardwareMap.dcMotor.get("back_left"),
-            (DcMotorEx)hardwareMap.dcMotor.get("back_right"),
-            hardwareMap.get(BNO055IMU.class, "imu")//,
-            //hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName())
+            hwMap.dcMotor.get("front_left"),
+            hwMap.dcMotor.get("front_right"),
+            hwMap.dcMotor.get("back_left"),
+            hwMap.dcMotor.get("back_right"),
+            hwMap.get(BNO055IMU.class, "imu")//,
         );
-        arm = new Arm(
-            new DcMotorEx[] {(DcMotorEx)hardwareMap.dcMotor.get("arm_left"), (DcMotorEx)hardwareMap.dcMotor.get("arm_right")},
-                (DcMotorEx)hardwareMap.dcMotor.get("extender")//,
-            //hardwareMap.analogInput.get("potent")
-        );
-        intake = new Intake(
-            hardwareMap.crservo.get("intake"),
-            hardwareMap.servo.get("door")
-        );
-        subsystems = new Subsystem[] {drivetrain, intake, arm};
-        subsystemUpdater = new Runnable() {
-            public void run() {
-                try {
-                    Thread.sleep(100);
-                    while (!Thread.interrupted()) {
-                        for (Subsystem subsystem : subsystems) {
-                            if (subsystem != null) {
-                                telemetryPackets.putAll(subsystem.updateSubsystem());
-                            }
-                        }
-                    }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    stop();
-                }
-            }
-        };
-        /*telemetryUpdater = new Runnable() {
-            public void run() {
-                try {
-                    Thread.sleep(100);
-                    while (!Thread.interrupted()) {
-                        for(String key : telemetryPackets.keySet()) {
-                            telemetry.addData(key, telemetryPackets.get(key));
-                        }
-                        telemetry.update();
-                        telemetryPackets.clear();
-                    }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    stop();
-                }
-            }
-        };*/
-    }
-
-    public void init() {
-        subsystemUpdateThread = new Thread(subsystemUpdater);
-        subsystemUpdateThread.start();
-        //telemetryUpdateThread = new Thread(telemetryUpdater);
-        //telemetryUpdateThread.start();
-    }
-
-    public void disableServos() {
-        ServoController controller = intake.getServoController();
-        controller.pwmDisable();
     }
 
     public void stop() {
-        subsystemUpdateThread.interrupt();
-        //telemetryUpdateThread.interrupt();
         drivetrain.stop();
-        arm.stop();
-        intake.stop();
     }
 }
