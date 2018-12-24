@@ -27,6 +27,11 @@ public class Drivetrain {
         fr.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         bl.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         br.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        fl.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        fr.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        bl.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        br.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
     }
 
     public void setupIMU() {
@@ -76,10 +81,10 @@ public class Drivetrain {
     }
 
     public void turn(double degrees) {
-        fl.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        fr.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        bl.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        br.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        fl.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        fr.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        bl.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        br.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         double error;
         do {
             error = imu.getAngularOrientation(AxesReference.EXTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle - degrees;
