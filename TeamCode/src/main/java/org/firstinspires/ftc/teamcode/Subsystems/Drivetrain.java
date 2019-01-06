@@ -92,7 +92,7 @@ public class Drivetrain {
             bl.setPower(error * 0.025);
             fr.setPower(-error * 0.025);
             br.setPower(-error * 0.025);
-        } while(Math.abs(error) > 3);
+        } while(Math.abs(error) > 3 || Math.abs(error) < 0);
     }
 
     public void stop() {
