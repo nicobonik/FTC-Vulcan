@@ -1,4 +1,13 @@
-#Mon May 06 12:16:48 PDT 2019
-base.0=/Users/williampaoli/Documents/FTC-New/Team8375/build/intermediates/transforms/dexMerger/debug/0
+#Mon May 06 13:08:47 PDT 2019
+path.3=classes.dex
+path.2=classes.dex
+path.1=classes.dex
 path.0=classes.dex
+renamed.3=classes4.dex
+renamed.2=classes3.dex
+renamed.1=classes2.dex
 renamed.0=classes.dex
+base.3=/Users/williampaoli/Documents/FTC-New/Team8375/build/intermediates/transforms/dexMerger/debug/12
+base.2=/Users/williampaoli/Documents/FTC-New/Team8375/build/intermediates/transforms/dexMerger/debug/14
+base.1=/Users/williampaoli/Documents/FTC-New/Team8375/build/intermediates/transforms/dexMerger/debug/13
+base.0=/Users/williampaoli/Documents/FTC-New/Team8375/build/intermediates/transforms/dexMerger/debug/15
