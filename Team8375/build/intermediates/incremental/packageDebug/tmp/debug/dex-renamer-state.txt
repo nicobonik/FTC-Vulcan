@@ -1,0 +1,4 @@
+#Mon May 06 12:16:48 PDT 2019
+base.0=/Users/williampaoli/Documents/FTC-New/Team8375/build/intermediates/transforms/dexMerger/debug/0
+path.0=classes.dex
+renamed.0=classes.dex
