@@ -11,6 +11,8 @@ MERGED from [:FtcCommon-release:] /Users/williampaoli/.gradle/caches/transforms-
 MERGED from [:WirelessP2p-release:] /Users/williampaoli/.gradle/caches/transforms-1/files-1.1/WirelessP2p-release.aar/cedb2537db10e2f9d85bd99058ab117e/AndroidManifest.xml:2:1-11:12
 MERGED from [:tfod-release:] /Users/williampaoli/.gradle/caches/transforms-1/files-1.1/tfod-release.aar/bf528c5d89a849e4fc03e19dc06cf777/AndroidManifest.xml:2:1-11:12
 MERGED from [:tensorflow-lite-0.0.0-nightly:] /Users/williampaoli/.gradle/caches/transforms-1/files-1.1/tensorflow-lite-0.0.0-nightly.aar/29196d9715086bfa21750afd1d444e7d/AndroidManifest.xml:2:1-6:12
+MERGED from [:endercv] /Users/williampaoli/Documents/FTC-New/endercv/build/intermediates/manifests/full/debug/AndroidManifest.xml:2:1-17:12
+MERGED from [:openCVLibrary3] /Users/williampaoli/Documents/FTC-New/openCVLibrary3/build/intermediates/manifests/full/debug/AndroidManifest.xml:2:1-11:12
 MERGED from [:Inspection-release:] /Users/williampaoli/.gradle/caches/transforms-1/files-1.1/Inspection-release.aar/ea67aa361193ad98f21d494c48361497/AndroidManifest.xml:2:1-32:12
 MERGED from [:Blocks-release:] /Users/williampaoli/.gradle/caches/transforms-1/files-1.1/Blocks-release.aar/9048b616edba777359ab57af9f13000a/AndroidManifest.xml:2:1-41:12
 INJECTED from /Users/williampaoli/Documents/FTC-New/Team8375/src/main/AndroidManifest.xml:8:1-12:12
@@ -40,10 +42,14 @@ MERGED from [:FtcCommon-release:] /Users/williampaoli/.gradle/caches/transforms-
 MERGED from [:FtcCommon-release:] /Users/williampaoli/.gradle/caches/transforms-1/files-1.1/FtcCommon-release.aar/1fa5a096c7b1cfabd72c97f482cf89f1/AndroidManifest.xml:23:5-233:19
 MERGED from [:tensorflow-lite-0.0.0-nightly:] /Users/williampaoli/.gradle/caches/transforms-1/files-1.1/tensorflow-lite-0.0.0-nightly.aar/29196d9715086bfa21750afd1d444e7d/AndroidManifest.xml:4:5-5:19
 MERGED from [:tensorflow-lite-0.0.0-nightly:] /Users/williampaoli/.gradle/caches/transforms-1/files-1.1/tensorflow-lite-0.0.0-nightly.aar/29196d9715086bfa21750afd1d444e7d/AndroidManifest.xml:4:5-5:19
+MERGED from [:endercv] /Users/williampaoli/Documents/FTC-New/endercv/build/intermediates/manifests/full/debug/AndroidManifest.xml:11:5-15:19
+MERGED from [:endercv] /Users/williampaoli/Documents/FTC-New/endercv/build/intermediates/manifests/full/debug/AndroidManifest.xml:11:5-15:19
 MERGED from [:Inspection-release:] /Users/williampaoli/.gradle/caches/transforms-1/files-1.1/Inspection-release.aar/ea67aa361193ad98f21d494c48361497/AndroidManifest.xml:19:5-30:19
 MERGED from [:Inspection-release:] /Users/williampaoli/.gradle/caches/transforms-1/files-1.1/Inspection-release.aar/ea67aa361193ad98f21d494c48361497/AndroidManifest.xml:19:5-30:19
 MERGED from [:Blocks-release:] /Users/williampaoli/.gradle/caches/transforms-1/files-1.1/Blocks-release.aar/9048b616edba777359ab57af9f13000a/AndroidManifest.xml:18:5-39:19
 MERGED from [:Blocks-release:] /Users/williampaoli/.gradle/caches/transforms-1/files-1.1/Blocks-release.aar/9048b616edba777359ab57af9f13000a/AndroidManifest.xml:18:5-39:19
+	android:supportsRtl
+		ADDED from [:endercv] /Users/williampaoli/Documents/FTC-New/endercv/build/intermediates/manifests/full/debug/AndroidManifest.xml:14:9-35
 	android:label
 		ADDED from [:FtcRobotController] /Users/williampaoli/Documents/FTC-New/FtcRobotController/build/intermediates/manifests/full/debug/AndroidManifest.xml:17:9-41
 	android:largeHeap
@@ -72,6 +78,10 @@ MERGED from [:WirelessP2p-release:] /Users/williampaoli/.gradle/caches/transform
 MERGED from [:WirelessP2p-release:] /Users/williampaoli/.gradle/caches/transforms-1/files-1.1/WirelessP2p-release.aar/cedb2537db10e2f9d85bd99058ab117e/AndroidManifest.xml:5:5-7:41
 MERGED from [:tfod-release:] /Users/williampaoli/.gradle/caches/transforms-1/files-1.1/tfod-release.aar/bf528c5d89a849e4fc03e19dc06cf777/AndroidManifest.xml:7:5-9:41
 MERGED from [:tfod-release:] /Users/williampaoli/.gradle/caches/transforms-1/files-1.1/tfod-release.aar/bf528c5d89a849e4fc03e19dc06cf777/AndroidManifest.xml:7:5-9:41
+MERGED from [:endercv] /Users/williampaoli/Documents/FTC-New/endercv/build/intermediates/manifests/full/debug/AndroidManifest.xml:7:5-9:41
+MERGED from [:endercv] /Users/williampaoli/Documents/FTC-New/endercv/build/intermediates/manifests/full/debug/AndroidManifest.xml:7:5-9:41
+MERGED from [:openCVLibrary3] /Users/williampaoli/Documents/FTC-New/openCVLibrary3/build/intermediates/manifests/full/debug/AndroidManifest.xml:7:5-9:41
+MERGED from [:openCVLibrary3] /Users/williampaoli/Documents/FTC-New/openCVLibrary3/build/intermediates/manifests/full/debug/AndroidManifest.xml:7:5-9:41
 MERGED from [:Inspection-release:] /Users/williampaoli/.gradle/caches/transforms-1/files-1.1/Inspection-release.aar/ea67aa361193ad98f21d494c48361497/AndroidManifest.xml:7:5-9:41
 MERGED from [:Inspection-release:] /Users/williampaoli/.gradle/caches/transforms-1/files-1.1/Inspection-release.aar/ea67aa361193ad98f21d494c48361497/AndroidManifest.xml:7:5-9:41
 MERGED from [:Blocks-release:] /Users/williampaoli/.gradle/caches/transforms-1/files-1.1/Blocks-release.aar/9048b616edba777359ab57af9f13000a/AndroidManifest.xml:7:5-9:41

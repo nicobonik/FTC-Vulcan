@@ -8,7 +8,7 @@ package com.google.ftcresearch.tfod;
 
 public final class R {
     public static final class id {
-        public static final int scrollView = 0x7f06009b;
+        public static final int scrollView = 0x7f06009e;
     }
     public static final class string {
         public static final int app_name = 0x7f0a0032;
